@@ -5,6 +5,7 @@ import '../providers/sale_provider.dart';
 import '../providers/purchase_provider.dart'; // ← NUEVO: Import para compras
 import '../providers/transaction_provider.dart'; // ← NUEVO: Import para transacciones
 import '../providers/auth_provider.dart';
+import '../widgets/custom_widgets.dart' as custom;
 
 class MainScreen extends StatelessWidget {
   const MainScreen({Key? key}) : super(key: key);
@@ -12,303 +13,191 @@ class MainScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
-    final userName = authProvider.currentUser?.fullName ?? 'Usuario';
+    final user = authProvider.currentUser;
+    final userName = user?.fullName ?? 'Usuario';
+    final businessName = user?.businessName ?? 'Mi Negocio';
+    final businessRuc = user?.businessRuc ?? '0000000000';
+    final isAdmin = user?.role == 'admin';
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'TauroStock',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1,
-          ),
-        ),
-        backgroundColor: const Color(0xFF5A189A),
-        elevation: 0,
-        centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout, color: Colors.white),
-            onPressed: () => _confirmLogout(context),
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // 👋 Saludo personalizado con estilo morado
-            Container(
-              margin: const EdgeInsets.only(bottom: 20),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    const Color(0xFF7B2CBF).withOpacity(0.1),
-                    const Color(0xFF9D4EDD).withOpacity(0.05),
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: const Color(0xFF7B2CBF).withOpacity(0.2),
-                ),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: const BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [Color(0xFF5A189A), Color(0xFF7B2CBF)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Text(
-                      userName[0].toUpperCase(),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Bienvenido,',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey,
-                          ),
-                        ),
-                        Text(
-                          userName,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF333333),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // 👋 Saludo personalizado con estilo morado
+          Container(
+            margin: const EdgeInsets.only(bottom: 20),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  custom.primaryLilac.withOpacity(0.08),
+                  custom.secondaryLilac.withOpacity(0.04),
                 ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: custom.primaryLilac.withOpacity(0.1),
               ),
             ),
-
-            // ========== NUEVO: RESUMEN FINANCIERO INTEGRADO ==========
-            Consumer3<SaleProvider, PurchaseProvider, TransactionProvider>(
-              builder: (context, saleProvider, purchaseProvider, transactionProvider, _) {
-                // Calcular totales
-                final totalVentas = saleProvider.totalSales;
-                final totalCompras = purchaseProvider.totalPurchases;
-                final totalIngresosExtras = transactionProvider.totalIncome;
-                final totalGastosExtras = transactionProvider.totalExpense;
-                
-                final ingresosTotales = totalVentas + totalIngresosExtras;
-                final gastosTotales = totalCompras + totalGastosExtras;
-                final utilidad = ingresosTotales - gastosTotales;
-                
-                return Container(
-                  margin: const EdgeInsets.only(bottom: 20),
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: const BoxDecoration(
                     gradient: LinearGradient(
-                      colors: [
-                        const Color(0xFF7B2CBF).withOpacity(0.1),
-                        Colors.purple[50]!,
-                      ],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
+                      colors: [custom.primaryLilac, custom.secondaryLilac],
                     ),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: const Color(0xFF7B2CBF).withOpacity(0.2),
-                    ),
+                    shape: BoxShape.circle,
                   ),
-                  child: Column(
+                  child: Text(
+                    userName[0].toUpperCase(),
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('Bienvenido de nuevo a $businessName,', style: TextStyle(fontSize: 12, color: custom.textSecondary)),
+                    Text(userName, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                  ],
+                ),
+              ],
+            ),
+          ),
+
+          // ⚡ ACCESOS RÁPIDOS (HUB)
+          custom.SectionHeader(title: 'Accesos Rápidos'),
+          const SizedBox(height: 12),
+          GridView.count(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisCount: 2,
+            crossAxisSpacing: 12,
+            mainAxisSpacing: 12,
+            childAspectRatio: 1.5, // Ajustado de 1.6 para más espacio
+            children: [
+              _buildQuickAccessBtn(context, 'Nueva Venta', Icons.add_shopping_cart, Colors.purple, () => Navigator.pushNamed(context, '/inventory')),
+              if (isAdmin)
+                _buildQuickAccessBtn(context, 'Nuevo Gasto', Icons.money_off, Colors.red, () => Navigator.pushNamed(context, '/expense_form')),
+              if (isAdmin)
+                _buildQuickAccessBtn(context, 'Cierre Caja', Icons.account_balance_wallet, Colors.teal, () => Navigator.pushNamed(context, '/cash_session')),
+              _buildQuickAccessBtn(context, 'Inventario', Icons.inventory_2, Colors.blue, () => Navigator.pushNamed(context, '/products')),
+            ],
+          ),
+          const SizedBox(height: 24),
+
+          // ========== NUEVO: RESUMEN FINANCIERO INTEGRADO ==========
+          Consumer3<SaleProvider, PurchaseProvider, TransactionProvider>(
+            builder: (context, saleProvider, purchaseProvider, transactionProvider, _) {
+              // Calcular totales
+              final totalVentas = saleProvider.totalSales;
+              final totalCompras = purchaseProvider.totalPurchases;
+              final totalIngresosExtras = transactionProvider.totalIncome;
+              final totalGastosExtras = transactionProvider.totalExpense;
+              
+              final ingresosTotales = totalVentas + totalIngresosExtras;
+              final gastosTotales = totalCompras + totalGastosExtras;
+              final utilidad = ingresosTotales - gastosTotales;
+              
+              return Column(
+                children: [
+                  GridView.count(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    crossAxisCount: 2,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
+                    childAspectRatio: 1.3, // Ajustado de 1.5 para más espacio vertical
                     children: [
-                      // Título
-                      const Row(
-                        children: [
-                          Icon(Icons.analytics, color: Color(0xFF7B2CBF), size: 20),
-                          SizedBox(width: 8),
-                          Text(
-                            'Resumen Financiero',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
+                      custom.SummaryCard(
+                        title: 'Ventas',
+                        value: '\$${totalVentas.toStringAsFixed(2)}',
+                        icon: Icons.trending_up,
+                        color: Colors.green,
                       ),
-                      const SizedBox(height: 16),
-                      
-                      // Ingresos
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              Container(
-                                width: 8,
-                                height: 8,
-                                decoration: const BoxDecoration(
-                                  color: Colors.green,
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              const Text('Ventas:', style: TextStyle(fontSize: 13)),
-                            ],
-                          ),
-                          Text(
-                            '\$${totalVentas.toStringAsFixed(2)}',
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
+                      custom.SummaryCard(
+                        title: 'Ingresos Extras',
+                        value: '\$${totalIngresosExtras.toStringAsFixed(2)}',
+                        icon: Icons.add_circle_outline,
+                        color: Colors.teal,
                       ),
-                      const SizedBox(height: 4),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              Container(
-                                width: 8,
-                                height: 8,
-                                decoration: const BoxDecoration(
-                                  color: Colors.green,
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              const Text('Otros Ingresos:', style: TextStyle(fontSize: 13)),
-                            ],
-                          ),
-                          Text(
-                            '\$${totalIngresosExtras.toStringAsFixed(2)}',
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
+                      custom.SummaryCard(
+                        title: 'Compras',
+                        value: '\$${totalCompras.toStringAsFixed(2)}',
+                        icon: Icons.shopping_bag_outlined,
+                        color: Colors.orange,
                       ),
-                      const Divider(height: 16),
-                      
-                      // Gastos
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              Container(
-                                width: 8,
-                                height: 8,
-                                decoration: const BoxDecoration(
-                                  color: Colors.red,
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              const Text('Compras:', style: TextStyle(fontSize: 13)),
-                            ],
-                          ),
-                          Text(
-                            '\$${totalCompras.toStringAsFixed(2)}',
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              Container(
-                                width: 8,
-                                height: 8,
-                                decoration: const BoxDecoration(
-                                  color: Colors.red,
-                                  shape: BoxShape.circle,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              const Text('Otros Gastos:', style: TextStyle(fontSize: 13)),
-                            ],
-                          ),
-                          Text(
-                            '\$${totalGastosExtras.toStringAsFixed(2)}',
-                            style: const TextStyle(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                      
-                      const Divider(height: 16),
-                      
-                      // Utilidad
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text(
-                            'Utilidad Neta:',
-                            style: TextStyle(
-                              fontSize: 15,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: utilidad >= 0 ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(20),
-                            ),
-                            child: Text(
-                              '\$${utilidad.toStringAsFixed(2)}',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: utilidad >= 0 ? Colors.green : Colors.red,
-                              ),
-                            ),
-                          ),
-                        ],
+                      custom.SummaryCard(
+                        title: 'Gastos Extras',
+                        value: '\$${totalGastosExtras.toStringAsFixed(2)}',
+                        icon: Icons.money_off,
+                        color: Colors.red,
                       ),
                     ],
                   ),
-                );
-              },
-            ),
+                  const SizedBox(height: 12),
+                  // Utilidad Neta Destacada
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          utilidad >= 0 ? Colors.green[700]! : Colors.red[700]!,
+                          utilidad >= 0 ? Colors.green[400]! : Colors.red[400]!,
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: (utilidad >= 0 ? Colors.green : Colors.red).withOpacity(0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'UTILIDAD NETA',
+                              style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              'Rendimiento Real',
+                              style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                        Text(
+                          '\$${utilidad.toStringAsFixed(2)}',
+                          style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                ],
+              );
+            },
+          ),
             // ========== FIN RESUMEN FINANCIERO ==========
 
-            // Selector de período y gráfico de ventas
-            Consumer<SaleProvider>(
-              builder: (context, saleProvider, _) {
+          // Selector de período y gráfico de ventas
+          Consumer<SaleProvider>(
+            builder: (context, saleProvider, _) {
                 if (saleProvider.sales.isEmpty && !saleProvider.isLoading) {
                   WidgetsBinding.instance.addPostFrameCallback((_) {
-                    saleProvider.loadSales();
+                    saleProvider.loadSales(businessRuc);
                   });
                   return const SizedBox.shrink();
                 }
@@ -454,8 +343,8 @@ class MainScreen extends StatelessWidget {
                                             decoration: BoxDecoration(
                                               gradient: LinearGradient(
                                                 colors: [
-                                                  const Color(0xFF7B2CBF).withOpacity(0.7),
-                                                  const Color(0xFF7B2CBF),
+                                                  custom.secondaryLilac.withOpacity(0.7),
+                                                  custom.secondaryLilac,
                                                 ],
                                               ),
                                               borderRadius: BorderRadius.circular(6),
@@ -908,8 +797,7 @@ class MainScreen extends StatelessWidget {
                 );
               },
             ),
-          ],
-        ),
+        ],
       ),
     );
   }
@@ -935,6 +823,42 @@ class MainScreen extends StatelessWidget {
             child: const Text('Cerrar Sesión'),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildQuickAccessBtn(BuildContext context, String title, IconData icon, Color color, VoidCallback onTap) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: color.withOpacity(0.15)),
+          boxShadow: [
+            BoxShadow(color: color.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, 2)),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(8)),
+              child: Icon(icon, color: color, size: 20),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                title,
+                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

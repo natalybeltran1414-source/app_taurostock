@@ -7,6 +7,7 @@ class Purchase {
   final String paymentStatus; // 'pagado', 'pendiente'
   final DateTime purchaseDate;
   final List<PurchaseItem> items;
+  final String? businessRuc; // ← NUEVO: v12
   final String? notes;
 
   Purchase({
@@ -18,6 +19,7 @@ class Purchase {
     this.paymentStatus = 'pendiente',
     required this.purchaseDate,
     required this.items,
+    this.businessRuc,
     this.notes,
   });
 
@@ -30,6 +32,7 @@ class Purchase {
       'finalAmount': finalAmount,
       'paymentStatus': paymentStatus,
       'purchaseDate': purchaseDate.toIso8601String(),
+      'businessRuc': businessRuc,
       'notes': notes,
     };
   }
@@ -44,6 +47,7 @@ class Purchase {
       paymentStatus: map['paymentStatus'] ?? 'pendiente',
       purchaseDate: DateTime.parse(map['purchaseDate']),
       items: [],
+      businessRuc: map['businessRuc'],
       notes: map['notes'],
     );
   }
@@ -57,6 +61,7 @@ class Purchase {
     String? paymentStatus,
     DateTime? purchaseDate,
     List<PurchaseItem>? items,
+    String? businessRuc,
     String? notes,
   }) {
     return Purchase(
@@ -68,6 +73,7 @@ class Purchase {
       paymentStatus: paymentStatus ?? this.paymentStatus,
       purchaseDate: purchaseDate ?? this.purchaseDate,
       items: items ?? this.items,
+      businessRuc: businessRuc ?? this.businessRuc,
       notes: notes ?? this.notes,
     );
   }

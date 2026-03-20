@@ -8,6 +8,7 @@ class Transaction {
   final String category; // 'alquiler', 'servicios', 'sueldos', 'otros'
   final DateTime date;
   final String? notes;
+  final String? businessRuc; // ← NUEVO: v12
   final bool isActive;
 
   Transaction({
@@ -18,6 +19,7 @@ class Transaction {
     required this.category,
     required this.date,
     this.notes,
+    this.businessRuc,
     this.isActive = true,
   });
 
@@ -30,6 +32,7 @@ class Transaction {
       'category': category,
       'date': date.toIso8601String(),
       'notes': notes,
+      'businessRuc': businessRuc,
       'isActive': isActive ? 1 : 0,
     };
   }
@@ -43,6 +46,7 @@ class Transaction {
       category: map['category'] ?? 'otros',
       date: DateTime.parse(map['date']),
       notes: map['notes'],
+      businessRuc: map['businessRuc'],
       isActive: map['isActive'] == 1,
     );
   }
@@ -55,6 +59,7 @@ class Transaction {
     String? category,
     DateTime? date,
     String? notes,
+    String? businessRuc,
     bool? isActive,
   }) {
     return Transaction(
@@ -65,6 +70,7 @@ class Transaction {
       category: category ?? this.category,
       date: date ?? this.date,
       notes: notes ?? this.notes,
+      businessRuc: businessRuc ?? this.businessRuc,
       isActive: isActive ?? this.isActive,
     );
   }

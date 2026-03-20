@@ -4,11 +4,13 @@ class Sale {
   final double total;
   final double discount;
   final double finalAmount;
-  final String paymentMethod; // 'efectivo', 'credito', 'transferencia'
+  final String? paymentMethod;
   final DateTime saleDate;
   final List<SaleItem> items;
-  final String status; // 'completada', 'pendiente'
+  final List<SalePayment> payments;
+  final String status;
   final String? notes;
+  final String? businessRuc; // ← NUEVO: v12
 
   Sale({
     this.id,
@@ -19,8 +21,10 @@ class Sale {
     required this.paymentMethod,
     required this.saleDate,
     required this.items,
+    this.payments = const [],
     this.status = 'completada',
     this.notes,
+    this.businessRuc,
   });
 
   Map<String, dynamic> toMap() {
@@ -34,6 +38,7 @@ class Sale {
       'saleDate': saleDate.toIso8601String(),
       'status': status,
       'notes': notes,
+      'businessRuc': businessRuc,
     };
   }
 
@@ -47,8 +52,10 @@ class Sale {
       paymentMethod: map['paymentMethod'] ?? 'efectivo',
       saleDate: DateTime.parse(map['saleDate']),
       items: [],
+      payments: [],
       status: map['status'] ?? 'completada',
       notes: map['notes'],
+      businessRuc: map['businessRuc'],
     );
   }
 
@@ -58,11 +65,12 @@ class Sale {
     double? total,
     double? discount,
     double? finalAmount,
-    String? paymentMethod,
     DateTime? saleDate,
     List<SaleItem>? items,
+    List<SalePayment>? payments,
     String? status,
     String? notes,
+    String? businessRuc,
   }) {
     return Sale(
       id: id ?? this.id,
@@ -73,8 +81,42 @@ class Sale {
       paymentMethod: paymentMethod ?? this.paymentMethod,
       saleDate: saleDate ?? this.saleDate,
       items: items ?? this.items,
+      payments: payments ?? this.payments,
       status: status ?? this.status,
       notes: notes ?? this.notes,
+      businessRuc: businessRuc ?? this.businessRuc,
+    );
+  }
+}
+
+class SalePayment {
+  final int? id;
+  final int saleId;
+  final String method;
+  final double amount;
+
+  SalePayment({
+    this.id,
+    required this.saleId,
+    required this.method,
+    required this.amount,
+  });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'saleId': saleId,
+      'method': method,
+      'amount': amount,
+    };
+  }
+
+  factory SalePayment.fromMap(Map<String, dynamic> map) {
+    return SalePayment(
+      id: map['id'],
+      saleId: map['saleId'],
+      method: map['method'] ?? 'efectivo',
+      amount: map['amount']?.toDouble() ?? 0.0,
     );
   }
 }

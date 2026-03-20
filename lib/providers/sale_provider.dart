@@ -153,21 +153,13 @@ class SaleProvider extends ChangeNotifier {
   }
 
   // Cargar todas las ventas (sin cambios - carga todo)
-  Future<void> loadSales() async {
+  Future<void> loadSales(String businessRuc) async {
     _isLoading = true;
     _errorMessage = '';
     notifyListeners();
 
     try {
-      _sales = await _databaseService.getAllSales();
-      
-      for (int i = 0; i < _sales.length; i++) {
-        final saleWithItems = await _databaseService.getSaleById(_sales[i].id!);
-        if (saleWithItems != null) {
-          _sales[i] = saleWithItems;
-        }
-      }
-      
+      _sales = await _databaseService.getAllSales(businessRuc);
       _isLoading = false;
       notifyListeners();
     } catch (e) {
@@ -185,5 +177,41 @@ class SaleProvider extends ChangeNotifier {
              sale.status == 'completada' &&
              sale.paymentMethod != 'credito';
     }).toList();
+  }
+
+  Future<bool> addSale(Sale sale) async {
+    try {
+      await _databaseService.createSale(sale);
+      await loadSales(sale.businessRuc!);
+      return true;
+    } catch (e) {
+      _errorMessage = 'Error creando venta: $e';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  // ← NUEVO: Anular Venta
+  Future<bool> annulSale(int saleId, String businessRuc) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final success = await _databaseService.annulSale(saleId, businessRuc);
+      if (success) {
+        await loadSales(businessRuc);
+      }
+      return success;
+    } catch (e) {
+      _errorMessage = 'Error anulando venta: $e';
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<double> getDailySales(DateTime date, String businessRuc) async {
+    return await _databaseService.getDailySales(date, businessRuc);
   }
 }

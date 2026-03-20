@@ -3,10 +3,12 @@ class User {
   final String email;
   final String password;
   final String fullName;
-  final String role; // 'admin' o 'operador'
+  final String role; // 'admin' o 'empleado'
+  final String businessRuc; // ← NUEVO: Identificador único de empresa
+  final String businessName; // ← NUEVO: Nombre del negocio
   final DateTime createdAt;
   final bool isActive;
-  final String? imagePath; // ← NUEVO: Ruta de la foto de perfil
+  final String? imagePath;
 
   User({
     this.id,
@@ -14,9 +16,11 @@ class User {
     required this.password,
     required this.fullName,
     required this.role,
+    required this.businessRuc,
+    required this.businessName,
     required this.createdAt,
     this.isActive = true,
-    this.imagePath, // ← NUEVO
+    this.imagePath,
   });
 
   Map<String, dynamic> toMap() {
@@ -26,9 +30,11 @@ class User {
       'password': password,
       'fullName': fullName,
       'role': role,
+      'businessRuc': businessRuc,
+      'businessName': businessName,
       'createdAt': createdAt.toIso8601String(),
       'isActive': isActive ? 1 : 0,
-      'imagePath': imagePath, // ← NUEVO
+      'imagePath': imagePath,
     };
   }
 
@@ -39,9 +45,11 @@ class User {
       password: map['password'],
       fullName: map['fullName'],
       role: map['role'],
+      businessRuc: map['businessRuc'] ?? '',
+      businessName: map['businessName'] ?? '',
       createdAt: DateTime.parse(map['createdAt']),
       isActive: map['isActive'] == 1,
-      imagePath: map['imagePath'], // ← NUEVO
+      imagePath: map['imagePath'],
     );
   }
 
@@ -51,9 +59,11 @@ class User {
     String? password,
     String? fullName,
     String? role,
+    String? businessRuc,
+    String? businessName,
     DateTime? createdAt,
     bool? isActive,
-    String? imagePath, // ← NUEVO
+    String? imagePath,
   }) {
     return User(
       id: id ?? this.id,
@@ -61,9 +71,11 @@ class User {
       password: password ?? this.password,
       fullName: fullName ?? this.fullName,
       role: role ?? this.role,
+      businessRuc: businessRuc ?? this.businessRuc,
+      businessName: businessName ?? this.businessName,
       createdAt: createdAt ?? this.createdAt,
       isActive: isActive ?? this.isActive,
-      imagePath: imagePath ?? this.imagePath, // ← NUEVO
+      imagePath: imagePath ?? this.imagePath,
     );
   }
 }

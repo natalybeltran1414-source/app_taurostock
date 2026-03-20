@@ -57,20 +57,20 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      custom.secondaryPurple.withOpacity(0.1),
-                      custom.lightPurple.withOpacity(0.05),
+                      custom.primaryLilac.withOpacity(0.1),
+                      custom.secondaryLilac.withOpacity(0.05),
                     ],
                   ),
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: custom.secondaryPurple.withOpacity(0.2),
+                    color: custom.primaryLilac.withOpacity(0.2),
                     width: 2,
                   ),
                 ),
                 child: Icon(
                   Icons.password,
                   size: 50,
-                  color: custom.secondaryPurple,
+                  color: custom.primaryLilac,
                 ),
               ),
             ),
@@ -101,7 +101,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 vertical: 6,
               ),
               decoration: BoxDecoration(
-                color: custom.secondaryPurple.withOpacity(0.1),
+                color: custom.primaryLilac.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
@@ -109,7 +109,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
-                  color: custom.secondaryPurple,
+                  color: custom.primaryLilac,
                 ),
               ),
             ),
@@ -139,7 +139,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                         _obscureNewPassword
                             ? Icons.visibility_off
                             : Icons.visibility,
-                        color: custom.secondaryPurple,
+                        color: custom.primaryLilac,
                       ),
                       onPressed: () {
                         setState(() {
@@ -182,7 +182,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                         _obscureConfirmPassword
                             ? Icons.visibility_off
                             : Icons.visibility,
-                        color: custom.secondaryPurple,
+                        color: custom.primaryLilac,
                       ),
                       onPressed: () {
                         setState(() {
@@ -277,7 +277,7 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
                             Navigator.of(context).popUntil((route) => route.isFirst);
                           },
                           style: TextButton.styleFrom(
-                            foregroundColor: custom.secondaryPurple,
+                            foregroundColor: custom.primaryLilac,
                           ),
                           child: const Text('Iniciar sesión'),
                         ),

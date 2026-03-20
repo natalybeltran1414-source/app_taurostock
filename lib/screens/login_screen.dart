@@ -22,10 +22,6 @@ class _LoginScreenState extends State<LoginScreen> {
     super.initState();
     _emailController = TextEditingController();
     _passwordController = TextEditingController();
-    
-    // Demo - llenar con credenciales de prueba
-    _emailController.text = 'admin@tauroglosck.com';
-    _passwordController.text = 'admin123';
   }
 
   @override
@@ -51,7 +47,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 decoration: BoxDecoration(
                   boxShadow: [
                     BoxShadow(
-                      color: custom.secondaryPurple.withOpacity(0.3),
+                      color: custom.secondaryLilac.withOpacity(0.3),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -73,7 +69,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
-                  color: custom.secondaryPurple,
+                  color: custom.primaryLilac,
                 ),
               ),
               const SizedBox(height: 12),
@@ -136,7 +132,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide(color: custom.secondaryPurple),
+                        borderSide: const BorderSide(color: custom.primaryLilac),
                       ),
                       filled: true,
                       fillColor: custom.backgroundGrey,
@@ -159,7 +155,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: Text(
                         '¿Olvidaste tu contraseña?',
                         style: TextStyle(
-                          color: custom.secondaryPurple,
+                          color: custom.primaryLilac,
                           fontSize: 12,
                           fontWeight: FontWeight.w500,
                         ),
@@ -245,7 +241,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: Text(
                       'O',
                       style: TextStyle(
-                        color: custom.textSecondary,
+                        color: custom.primaryLilac,
                         fontSize: 14,
                       ),
                     ),
@@ -283,7 +279,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       'Regístrate',
                       style: TextStyle(
                         fontSize: 14,
-                        color: custom.secondaryPurple,
+                        color: custom.primaryLilac,
                         fontWeight: FontWeight.bold,
                       ),
                     ),

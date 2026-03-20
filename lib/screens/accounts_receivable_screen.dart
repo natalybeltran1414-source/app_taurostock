@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/client.dart';
 import '../providers/client_provider.dart';
+import '../providers/auth_provider.dart';
 import '../services/database_service.dart';
 import '../widgets/custom_widgets.dart' as custom; // ← MEJORADO: con alias
 
@@ -21,7 +22,8 @@ class _AccountsReceivableScreenState extends State<AccountsReceivableScreen> {
     super.initState();
     _db = DatabaseService();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<ClientProvider>(context, listen: false).loadClients();
+      final businessRuc = Provider.of<AuthProvider>(context, listen: false).currentUser?.businessRuc ?? '0000000000';
+      Provider.of<ClientProvider>(context, listen: false).loadClients(businessRuc);
     });
   }
 
@@ -95,7 +97,7 @@ class _AccountsReceivableScreenState extends State<AccountsReceivableScreen> {
                         title: 'Clientes',
                         value: clientsWithDebt.length.toString(),
                         icon: Icons.people,
-                        color: custom.secondaryPurple,
+                        color: custom.primaryLilac,
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -157,11 +159,11 @@ class _AccountsReceivableScreenState extends State<AccountsReceivableScreen> {
           // Botón de detalles
           Container(
             decoration: BoxDecoration(
-              color: custom.secondaryPurple.withOpacity(0.1),
+              color: custom.primaryLilac.withOpacity(0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: IconButton(
-              icon: Icon(Icons.info_outline, color: custom.secondaryPurple, size: 20),
+              icon: Icon(Icons.info_outline, color: custom.primaryLilac, size: 20),
               onPressed: () => _showClientDetailsDialog(context, client),
             ),
           ),
@@ -185,10 +187,10 @@ class _AccountsReceivableScreenState extends State<AccountsReceivableScreen> {
             ListTile(
               contentPadding: EdgeInsets.zero,
               leading: CircleAvatar(
-                backgroundColor: custom.secondaryPurple.withOpacity(0.1),
+                backgroundColor: custom.primaryLilac.withOpacity(0.1),
                 child: Text(
                   client.name[0].toUpperCase(),
-                  style: TextStyle(color: custom.secondaryPurple),
+                  style: TextStyle(color: custom.primaryLilac),
                 ),
               ),
               title: Text(client.name),
@@ -226,11 +228,12 @@ class _AccountsReceivableScreenState extends State<AccountsReceivableScreen> {
                 return;
               }
 
-              await _db.recordClientPayment(client.id!, payment);
+              final businessRuc = Provider.of<AuthProvider>(context, listen: false).currentUser?.businessRuc ?? '0000000000';
+              await _db.recordClientPayment(client.id!, payment, businessRuc);
 
               if (context.mounted) {
                 Provider.of<ClientProvider>(context, listen: false)
-                    .loadClients();
+                    .loadClients(businessRuc);
                 Navigator.pop(context);
 
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -259,10 +262,10 @@ class _AccountsReceivableScreenState extends State<AccountsReceivableScreen> {
         title: Row(
           children: [
             CircleAvatar(
-              backgroundColor: custom.secondaryPurple.withOpacity(0.1),
+              backgroundColor: custom.primaryLilac.withOpacity(0.1),
               child: Text(
                 client.name[0].toUpperCase(),
-                style: TextStyle(color: custom.secondaryPurple),
+                style: TextStyle(color: custom.primaryLilac),
               ),
             ),
             const SizedBox(width: 12),

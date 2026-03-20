@@ -46,20 +46,20 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      custom.secondaryPurple.withOpacity(0.1),
-                      custom.lightPurple.withOpacity(0.05),
+                      custom.primaryLilac.withOpacity(0.1),
+                      custom.secondaryLilac.withOpacity(0.05),
                     ],
                   ),
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: custom.secondaryPurple.withOpacity(0.2),
+                    color: custom.primaryLilac.withOpacity(0.2),
                     width: 2,
                   ),
                 ),
                 child: Icon(
                   Icons.lock_reset,
                   size: 50,
-                  color: custom.secondaryPurple,
+                  color: custom.primaryLilac,
                 ),
               ),
             ),
@@ -131,7 +131,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                       child: Text(
                         _emailController.text,
                         style: TextStyle(
-                          color: custom.secondaryPurple,
+                          color: custom.primaryLilac,
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                         ),
@@ -200,7 +200,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                     Navigator.of(context).pop();
                   },
                   style: TextButton.styleFrom(
-                    foregroundColor: custom.secondaryPurple,
+                    foregroundColor: custom.primaryLilac,
                   ),
                   child: const Text(
                     'Volver al inicio de sesión',

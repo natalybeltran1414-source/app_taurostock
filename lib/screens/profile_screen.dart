@@ -67,7 +67,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           child: Wrap(
             children: [
               ListTile(
-                leading: Icon(Icons.photo_library, color: custom.secondaryPurple), // ← CORREGIDO
+                leading: Icon(Icons.photo_library, color: custom.primaryLilac), // ← CORREGIDO
                 title: const Text('Elegir de la galería'),
                 onTap: () async {
                   Navigator.pop(context);
@@ -83,7 +83,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 },
               ),
               ListTile(
-                leading: Icon(Icons.camera_alt, color: custom.secondaryPurple), // ← CORREGIDO
+                leading: Icon(Icons.camera_alt, color: custom.primaryLilac), // ← CORREGIDO
                 title: const Text('Tomar foto'),
                 onTap: () async {
                   Navigator.pop(context);
@@ -115,16 +115,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context);
-    final user = authProvider.currentUser;
+Widget build(BuildContext context) {
+  final authProvider = Provider.of<AuthProvider>(context);
+  final user = authProvider.currentUser;
 
-    if (user == null) {
-      return const Scaffold(
-        body: Center(child: Text('Usuario no encontrado')),
-      );
-    }
-
+  if (user == null) {
+    // Redirigir en lugar de mostrar error
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Navigator.of(context).popUntil((route) => route.isFirst);
+    });
+    return const SizedBox.shrink();
+  }
     return Scaffold(
       appBar: custom.CustomAppBar( // ← CORREGIDO: usar alias
         title: 'Mi Perfil',
@@ -174,7 +175,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             border: Border.all(color: Colors.white, width: 3),
                             boxShadow: [
                               BoxShadow(
-                                color: custom.primaryPurple.withOpacity(0.3), // ← CORREGIDO
+                                color: custom.primaryLilac.withOpacity(0.3), // ← CORREGIDO
                                 blurRadius: 10,
                                 offset: const Offset(0, 4),
                               ),
@@ -191,7 +192,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 : Container(
                                     decoration: const BoxDecoration(
                                       gradient: LinearGradient(
-                                        colors: [custom.primaryPurple, custom.secondaryPurple], // ← CORREGIDO
+                                        colors: [custom.primaryLilac, custom.primaryLilac], // ← CORREGIDO
                                         begin: Alignment.topLeft,
                                         end: Alignment.bottomRight,
                                       ),
@@ -218,7 +219,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               child: Container(
                                 padding: const EdgeInsets.all(8),
                                 decoration: BoxDecoration(
-                                  color: custom.secondaryPurple, // ← CORREGIDO
+                                  color: custom.primaryLilac, // ← CORREGIDO
                                   shape: BoxShape.circle,
                                 ),
                                 child: const Icon(
@@ -282,12 +283,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             leading: Container(
                               padding: const EdgeInsets.all(8),
                               decoration: BoxDecoration(
-                                color: custom.secondaryPurple.withOpacity(0.1), // ← CORREGIDO
+                                color: custom.primaryLilac.withOpacity(0.1), // ← CORREGIDO
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Icon(
                                 Icons.admin_panel_settings,
-                                color: custom.secondaryPurple, // ← CORREGIDO
+                                color: custom.primaryLilac, // ← CORREGIDO
                                 size: 20,
                               ),
                             ),
@@ -338,7 +339,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 TextButton(
                                   onPressed: () => setState(() => _isChangingPassword = true),
                                   style: TextButton.styleFrom(
-                                    foregroundColor: custom.secondaryPurple, // ← CORREGIDO
+                                    foregroundColor: custom.primaryLilac, // ← CORREGIDO
                                   ),
                                   child: const Text('Cambiar contraseña'),
                                 ),
@@ -346,7 +347,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 TextButton(
                                   onPressed: () => setState(() => _isChangingPassword = false),
                                   style: TextButton.styleFrom(
-                                    foregroundColor: custom.secondaryPurple, // ← CORREGIDO
+                                    foregroundColor: custom.primaryLilac, // ← CORREGIDO
                                   ),
                                   child: const Text('Cancelar'),
                                 ),
@@ -411,7 +412,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         _obscureCurrentPassword
                                             ? Icons.visibility_off
                                             : Icons.visibility,
-                                        color: custom.secondaryPurple, // ← CORREGIDO
+                                        color: custom.primaryLilac, // ← CORREGIDO
                                       ),
                                       onPressed: () {
                                         setState(() {
@@ -453,7 +454,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         _obscureNewPassword
                                             ? Icons.visibility_off
                                             : Icons.visibility,
-                                        color: custom.secondaryPurple, // ← CORREGIDO
+                                        color: custom.primaryLilac, // ← CORREGIDO
                                       ),
                                       onPressed: () {
                                         setState(() {
@@ -495,7 +496,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         _obscureConfirmPassword
                                             ? Icons.visibility_off
                                             : Icons.visibility,
-                                        color: custom.secondaryPurple, // ← CORREGIDO
+                                        color: custom.primaryLilac, // ← CORREGIDO
                                       ),
                                       onPressed: () {
                                         setState(() {
@@ -554,10 +555,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       leading: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: custom.secondaryPurple.withOpacity(0.1), // ← CORREGIDO
+          color: custom.primaryLilac.withOpacity(0.1), // ← CORREGIDO
           borderRadius: BorderRadius.circular(8),
         ),
-        child: Icon(icon, color: custom.secondaryPurple, size: 20), // ← CORREGIDO
+        child: Icon(icon, color: custom.primaryLilac, size: 20), // ← CORREGIDO
       ),
       title: Text(
         label,

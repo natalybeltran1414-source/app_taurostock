@@ -6,6 +6,7 @@ import '../models/purchase.dart';
 import '../providers/transaction_provider.dart';
 import '../providers/sale_provider.dart';
 import '../providers/purchase_provider.dart';
+import '../providers/auth_provider.dart';
 import '../widgets/custom_widgets.dart' as custom; // ← MEJORADO: con alias
 import 'transaction_form_screen.dart';
 
@@ -30,10 +31,11 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     _searchController = TextEditingController();
     _updateDateRange('Hoy');
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      final businessRuc = Provider.of<AuthProvider>(context, listen: false).currentUser?.businessRuc ?? '0000000000';
       Future.wait([
-        Provider.of<TransactionProvider>(context, listen: false).loadTransactions(),
-        Provider.of<SaleProvider>(context, listen: false).loadSales(),
-        Provider.of<PurchaseProvider>(context, listen: false).loadPurchases(),
+        Provider.of<TransactionProvider>(context, listen: false).loadTransactions(businessRuc),
+        Provider.of<SaleProvider>(context, listen: false).loadSales(businessRuc),
+        Provider.of<PurchaseProvider>(context, listen: false).loadPurchases(businessRuc),
       ]);
     });
   }
@@ -135,18 +137,25 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     double expense = 0;
     
     for (var item in items) {
-      if (item['type'] == 'sale' || 
-          (item['type'] == 'transaction' && (item['data'] as Transaction).type == 'ingreso')) {
-        if (item['type'] == 'sale') {
-          income += (item['data'] as Sale).finalAmount;
-        } else {
-          income += (item['data'] as Transaction).amount;
+      if (item['type'] == 'sale') {
+        final sale = item['data'] as Sale;
+        if (sale.status != 'anulada') {
+          income += sale.finalAmount;
         }
-      } else {
-        if (item['type'] == 'purchase') {
-          expense += (item['data'] as Purchase).finalAmount;
-        } else {
-          expense += (item['data'] as Transaction).amount;
+      } else if (item['type'] == 'transaction') {
+        final t = item['data'] as Transaction;
+        if (t.isActive) {
+          if (t.type == 'ingreso') {
+            income += t.amount;
+          } else {
+            expense += t.amount;
+          }
+        }
+      } else if (item['type'] == 'purchase') {
+        final p = item['data'] as Purchase;
+        // Solo contar compras pagadas y no anuladas (si existiera el estado)
+        if (p.paymentStatus == 'pagado') {
+          expense += p.finalAmount;
         }
       }
     }
@@ -170,13 +179,12 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     }
 
     for (var s in saleProvider.sales) {
-      if (s.status == 'completada' && s.paymentMethod != 'credito') {
-        items.add({
-          'type': 'sale',
-          'data': s,
-          'date': s.saleDate,
-        });
-      }
+      // Ahora incluimos todas, filtrándolas visualmente después
+      items.add({
+        'type': 'sale',
+        'data': s,
+        'date': s.saleDate,
+      });
     }
 
     for (var p in purchaseProvider.purchases) {
@@ -277,26 +285,26 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
                           color: _dateRangeText.contains('-') 
-                              ? custom.secondaryPurple.withOpacity(0.2)
+                              ? custom.primaryLilac.withOpacity(0.2)
                               : Colors.grey[100],
                           borderRadius: BorderRadius.circular(20),
                           border: Border.all(
                             color: _dateRangeText.contains('-')
-                                ? custom.secondaryPurple
+                                ? custom.primaryLilac
                                 : Colors.grey[300]!,
                           ),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.date_range, size: 14, color: custom.secondaryPurple),
+                            Icon(Icons.date_range, size: 14, color: custom.primaryLilac),
                             const SizedBox(width: 4),
                             Text(
                               _dateRangeText.contains('-') ? _dateRangeText : 'Rango',
                               style: TextStyle(
                                 fontSize: 12,
                                 color: _dateRangeText.contains('-') 
-                                    ? custom.secondaryPurple
+                                    ? custom.primaryLilac
                                     : custom.textSecondary,
                               ),
                             ),
@@ -314,14 +322,14 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [custom.primaryPurple, custom.secondaryPurple],
+                    colors: [custom.primaryLilac, custom.secondaryLilac],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
                   borderRadius: BorderRadius.circular(16),
                   boxShadow: [
                     BoxShadow(
-                      color: custom.secondaryPurple.withOpacity(0.3),
+                      color: custom.primaryLilac.withOpacity(0.3),
                       blurRadius: 10,
                       offset: const Offset(0, 4),
                     ),
@@ -461,7 +469,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         },
       ),
       floatingActionButton: FloatingActionButton(
-        backgroundColor: custom.secondaryPurple,
+        backgroundColor: custom.primaryLilac,
         onPressed: () {
           Navigator.of(context).push(
             MaterialPageRoute(
@@ -484,10 +492,10 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
         decoration: BoxDecoration(
-          color: isSelected ? custom.secondaryPurple : custom.backgroundGrey,
+          color: isSelected ? custom.primaryLilac : custom.backgroundGrey,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? custom.secondaryPurple : Colors.grey[300]!,
+            color: isSelected ? custom.primaryLilac : Colors.grey[300]!,
           ),
         ),
         child: Text(
@@ -510,20 +518,54 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       selected: isSelected,
       onSelected: (_) => setState(() => _selectedFilter = value),
       backgroundColor: custom.backgroundGrey,
-      selectedColor: custom.secondaryPurple.withOpacity(0.2),
-      checkmarkColor: custom.secondaryPurple,
+      selectedColor: custom.primaryLilac.withOpacity(0.2),
+      checkmarkColor: custom.primaryLilac,
     );
   }
 
-  // ← MEJORADO: Tarjeta de venta
+  // ← MEJORADO: Tarjeta de venta con opción de anulación
   Widget _buildSaleCard(Sale sale) {
+    final bool isAnulada = sale.status == 'anulada';
+    
     return custom.ListItemCard(
       title: 'Venta #${sale.id}',
       subtitle: '${sale.items.length} productos • ${sale.saleDate.day}/${sale.saleDate.month}',
       amount: '\$${sale.finalAmount.toStringAsFixed(2)}',
       icon: Icons.shopping_cart,
-      color: Colors.green,
-      status: 'Pagado',
+      color: isAnulada ? Colors.grey : Colors.green,
+      status: isAnulada ? 'ANULADA' : 'Pagada',
+      onTap: isAnulada ? null : () => _confirmAnnulSale(sale),
+    );
+  }
+
+  void _confirmAnnulSale(Sale sale) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Anular Venta'),
+        content: Text('¿Está seguro de que desea anular la Venta #${sale.id}?\n\nEsta acción devolverá los productos al stock y marcará la venta como anulada.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('CANCELAR')),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              final businessRuc = Provider.of<AuthProvider>(context, listen: false).currentUser?.businessRuc ?? '0000000000';
+              final success = await Provider.of<SaleProvider>(context, listen: false).annulSale(sale.id!, businessRuc);
+              if (success) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('✅ Venta anulada y stock devuelto'), backgroundColor: Colors.green),
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('❌ No se pudo anular la venta'), backgroundColor: Colors.red),
+                );
+              }
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('ANULAR VENTA'),
+          ),
+        ],
+      ),
     );
   }
 
@@ -551,7 +593,8 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         child: const Icon(Icons.delete, color: Colors.white),
       ),
       onDismissed: (_) {
-        provider.deleteTransaction(transaction.id!);
+        final businessRuc = Provider.of<AuthProvider>(context, listen: false).currentUser?.businessRuc ?? '0000000000';
+        provider.deleteTransaction(transaction.id!, businessRuc);
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('${transaction.description} eliminada'),

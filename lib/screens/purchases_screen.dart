@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/purchase.dart';
 import '../providers/purchase_provider.dart';
+import '../providers/auth_provider.dart';
 import '../widgets/custom_widgets.dart' as custom; // ← MEJORADO: con alias
 import 'debts_overview_screen.dart';
 import 'purchase_form_screen.dart';
@@ -21,7 +22,8 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
     super.initState();
     _searchController = TextEditingController();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<PurchaseProvider>(context, listen: false).loadPurchases();
+      final businessRuc = Provider.of<AuthProvider>(context, listen: false).currentUser?.businessRuc ?? '0000000000';
+      Provider.of<PurchaseProvider>(context, listen: false).loadPurchases(businessRuc);
     });
   }
 
@@ -147,8 +149,8 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
             ListTile(
               contentPadding: EdgeInsets.zero,
               leading: CircleAvatar(
-                backgroundColor: custom.secondaryPurple.withOpacity(0.1),
-                child: const Icon(Icons.shopping_cart, color: custom.secondaryPurple),
+                backgroundColor: custom.primaryLilac.withOpacity(0.1),
+                child: const Icon(Icons.shopping_cart, color: custom.primaryLilac),
               ),
               title: Text('Compra #${purchase.id}'),
               subtitle: Text('Total: \$${purchase.finalAmount.toStringAsFixed(2)}'),
@@ -172,7 +174,8 @@ class _PurchasesScreenState extends State<PurchasesScreen> {
                 listen: false
               );
               
-              final success = await provider.markAsPaid(purchase.id!);
+              final businessRuc = Provider.of<AuthProvider>(context, listen: false).currentUser?.businessRuc ?? '0000000000';
+              final success = await provider.markAsPaid(purchase.id!, businessRuc);
               
               if (success && mounted) {
                 Navigator.pop(context);

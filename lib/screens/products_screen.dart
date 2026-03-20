@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/product.dart';
 import '../providers/product_provider.dart';
+import '../providers/auth_provider.dart';
 import '../widgets/custom_widgets.dart' as custom; // ← CORREGIDO: con alias
 import 'product_form_screen.dart';
+import 'kardex_screen.dart';
 
 class ProductsScreen extends StatefulWidget {
   const ProductsScreen({Key? key}) : super(key: key);
@@ -21,7 +23,8 @@ class _ProductsScreenState extends State<ProductsScreen> {
     super.initState();
     _searchController = TextEditingController();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<ProductProvider>(context, listen: false).loadProducts();
+      final businessRuc = Provider.of<AuthProvider>(context, listen: false).currentUser?.businessRuc ?? '0000000000';
+      Provider.of<ProductProvider>(context, listen: false).loadProducts(businessRuc);
     });
   }
 
@@ -70,7 +73,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
 
               return Container(
                 padding: const EdgeInsets.all(16),
-                color: const Color(0xFF5A189A).withOpacity(0.05),
+                color: custom.primaryLilac.withOpacity(0.05),
                 child: Row(
                   children: [
                     Expanded(
@@ -78,7 +81,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
                         title: 'Productos',
                         value: activeProducts.length.toString(),
                         icon: Icons.inventory_2_outlined,
-                        color: custom.secondaryPurple, // ← Usar alias
+                        color: custom.primaryLilac, // ← Usar alias
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -115,7 +118,7 @@ class _ProductsScreenState extends State<ProductsScreen> {
 
               return Container(
                 padding: const EdgeInsets.all(16),
-                color: const Color(0xFF5A189A).withOpacity(0.05),
+                color: custom.primaryLilac.withOpacity(0.05),
                 child: Row(
                   children: [
                     Expanded(
@@ -228,6 +231,16 @@ class _ProductsScreenState extends State<ProductsScreen> {
               ),
             ),
             const PopupMenuItem(
+              value: 'kardex',
+              child: Row(
+                children: [
+                  Icon(Icons.history, size: 18, color: custom.primaryLilac),
+                  SizedBox(width: 8),
+                  Text('Ver Kardex'),
+                ],
+              ),
+            ),
+            const PopupMenuItem(
               value: 'delete',
               child: Row(
                 children: [
@@ -244,6 +257,12 @@ class _ProductsScreenState extends State<ProductsScreen> {
             Navigator.of(context).push(
               MaterialPageRoute(
                 builder: (context) => ProductFormScreen(product: product),
+              ),
+            );
+          } else if (value == 'kardex') {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => KardexScreen(product: product),
               ),
             );
           } else if (value == 'delete') {
@@ -269,10 +288,11 @@ class _ProductsScreenState extends State<ProductsScreen> {
             );
             
             if (confirm == true) {
+              final businessRuc = Provider.of<AuthProvider>(context, listen: false).currentUser?.businessRuc ?? '0000000000';
               final success = await Provider.of<ProductProvider>(
                 context, 
                 listen: false
-              ).deleteProduct(product.id!);
+              ).deleteProduct(product.id!, businessRuc);
               
               if (success && mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(

@@ -13,13 +13,13 @@ class ProviderModelProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String get errorMessage => _errorMessage;
 
-  Future<void> loadProviders() async {
+  Future<void> loadProviders(String businessRuc) async {
     _isLoading = true;
     _errorMessage = '';
     notifyListeners();
 
     try {
-      _providers = await _databaseService.getAllProviders();
+      _providers = await _databaseService.getAllProviders(businessRuc);
       _isLoading = false;
       notifyListeners();
     } catch (e) {
@@ -29,10 +29,10 @@ class ProviderModelProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> addProvider(ProviderModel provider) async {
+  Future<bool> addProvider(ProviderModel provider, String businessRuc) async {
     try {
       await _databaseService.createProvider(provider);
-      await loadProviders();
+      await loadProviders(provider.businessRuc!);
       return true;
     } catch (e) {
       _errorMessage = 'Error creando proveedor: $e';
@@ -41,10 +41,10 @@ class ProviderModelProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> updateProvider(ProviderModel provider) async {
+  Future<bool> updateProvider(ProviderModel provider, String businessRuc) async {
     try {
       await _databaseService.updateProvider(provider);
-      await loadProviders();
+      await loadProviders(provider.businessRuc!);
       return true;
     } catch (e) {
       _errorMessage = 'Error actualizando proveedor: $e';
@@ -53,10 +53,10 @@ class ProviderModelProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> deleteProvider(int id) async {
+  Future<bool> deleteProvider(int id, String businessRuc) async {
     try {
-      await _databaseService.deleteProvider(id);
-      await loadProviders();
+      await _databaseService.deleteProvider(id, businessRuc);
+      await loadProviders(businessRuc);
       return true;
     } catch (e) {
       _errorMessage = 'Error eliminando proveedor: $e';
@@ -65,8 +65,8 @@ class ProviderModelProvider extends ChangeNotifier {
     }
   }
 
-  Future<ProviderModel?> getProviderById(int id) async {
-    return await _databaseService.getProviderById(id);
+  Future<ProviderModel?> getProviderById(int id, String businessRuc) async {
+    return await _databaseService.getProviderById(id, businessRuc);
   }
 
   List<ProviderModel> searchProviders(String query) {

@@ -1,12 +1,18 @@
 import 'package:flutter/material.dart';
 
-// ==================== COLORES INSTITUCIONALES ====================
-const Color primaryPurple = Color(0xFF5A189A);
-const Color secondaryPurple = Color(0xFF7B2CBF);
-const Color lightPurple = Color(0xFF9D4EDD);
-const Color backgroundGrey = Color(0xFFF5F5F5);
-const Color textPrimary = Color(0xFF333333);
-const Color textSecondary = Color(0xFF999999);
+// ==================== COLORES LILA PREMIUM ====================
+const Color primaryLilac = Color(0xFF7209B7); // Lila Principal Vibrante
+const Color secondaryLilac = Color(0xFFB5179E); // Variación Fucsia/Lila
+const Color accentPurple = Color(0xFF4361EE);  // Azul Púrpura para acentos
+const Color softBackground = Color(0xFFF8F7FF); // Fondo suave
+const Color backgroundGrey = Color(0xFFF1F2F6);
+const Color textPrimary = Color(0xFF2D3436);
+const Color textSecondary = Color(0xFF636E72);
+
+// Colores específicos para el Sidebar (Estilo Premium Dark)
+const Color sidebarBackground = Color(0xFF1A1C1E); // Fondo oscuro profundo
+const Color sidebarSelection = Color(0xFF6366F1);  // Azul Púrpura selección
+const Color sidebarText = Color(0xFFE2E8F0);      // Texto claro para fondo oscuro
 
 // ==================== BOTONES ====================
 class CustomButton extends StatelessWidget {
@@ -33,10 +39,12 @@ class CustomButton extends StatelessWidget {
       child: ElevatedButton(
         onPressed: isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: backgroundColor ?? secondaryPurple,
-          disabledBackgroundColor: Colors.grey,
+          backgroundColor: backgroundColor ?? primaryLilac,
+          disabledBackgroundColor: Colors.grey[300],
+          elevation: 2,
+          shadowColor: primaryLilac.withOpacity(0.3),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(12),
           ),
         ),
         child: isLoading
@@ -65,21 +73,29 @@ class CustomButton extends StatelessWidget {
 class CustomTextField extends StatelessWidget {
   final String label;
   final String? hint;
+  final String? hintText;
   final TextEditingController controller;
   final TextInputType inputType;
+  final TextInputType? keyboardType;
   final bool obscureText;
   final String? Function(String?)? validator;
   final IconData? prefixIcon;
+  final int maxLines;
+  final ValueChanged<String>? onChanged;
 
   const CustomTextField({
     Key? key,
     required this.label,
     this.hint,
+    this.hintText,
     required this.controller,
     this.inputType = TextInputType.text,
+    this.keyboardType,
     this.obscureText = false,
     this.validator,
     this.prefixIcon,
+    this.maxLines = 1,
+    this.onChanged,
   }) : super(key: key);
 
   @override
@@ -98,23 +114,27 @@ class CustomTextField extends StatelessWidget {
         const SizedBox(height: 8),
         TextFormField(
           controller: controller,
-          keyboardType: inputType,
+          keyboardType: keyboardType ?? inputType,
           obscureText: obscureText,
           validator: validator,
+          maxLines: maxLines,
+          onChanged: onChanged,
           decoration: InputDecoration(
-            hintText: hint,
-            prefixIcon: prefixIcon != null ? Icon(prefixIcon) : null,
+            hintText: hintText ?? hint,
+            prefixIcon: prefixIcon != null ? Icon(prefixIcon, color: primaryLilac) : null,
+            filled: true,
+            fillColor: Colors.white,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey[200]!),
             ),
             enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey[200]!),
             ),
             focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: secondaryPurple),
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: primaryLilac, width: 2),
             ),
           ),
         ),
@@ -163,7 +183,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       flexibleSpace: Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [primaryPurple, secondaryPurple],
+            colors: [primaryLilac, secondaryLilac],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
@@ -200,14 +220,14 @@ class CustomBottomNavItem extends StatelessWidget {
         children: [
           Icon(
             icon,
-            color: isSelected ? secondaryPurple : textSecondary,
+            color: isSelected ? primaryLilac : textSecondary,
           ),
           const SizedBox(height: 4),
           Text(
             label,
             style: TextStyle(
               fontSize: 12,
-              color: isSelected ? secondaryPurple : textSecondary,
+              color: isSelected ? primaryLilac : textSecondary,
               fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
             ),
           ),
@@ -278,11 +298,11 @@ class SummaryCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: secondaryPurple.withOpacity(0.2)),
+          border: Border.all(color: primaryLilac.withOpacity(0.2)),
           boxShadow: [
             BoxShadow(
               color: Colors.grey.withOpacity(0.1),
@@ -303,16 +323,16 @@ class SummaryCard extends StatelessWidget {
               ),
               child: Icon(icon, color: color, size: 24),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 4),
             Text(
               title,
-              style: const TextStyle(fontSize: 12, color: textSecondary),
+              style: const TextStyle(fontSize: 11, color: textSecondary),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             Text(
               value,
               style: TextStyle(
-                fontSize: 20,
+                fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: color,
               ),
@@ -428,7 +448,7 @@ class SectionHeader extends StatelessWidget {
               width: 4,
               height: 20,
               decoration: BoxDecoration(
-                color: secondaryPurple,
+                color: primaryLilac,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -448,7 +468,7 @@ class SectionHeader extends StatelessWidget {
             onPressed: onActionTap,
             child: Text(
               actionLabel!,
-              style: TextStyle(color: secondaryPurple),
+              style: const TextStyle(color: primaryLilac),
             ),
           ),
       ],
@@ -501,7 +521,7 @@ class CustomLoadingIndicator extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           const CircularProgressIndicator(
-            color: secondaryPurple,
+            color: primaryLilac,
           ),
           if (message != null) ...[
             const SizedBox(height: 16),
@@ -536,7 +556,7 @@ class SearchBar extends StatelessWidget {
       onChanged: onChanged,
       decoration: InputDecoration(
         hintText: hintText,
-        prefixIcon: const Icon(Icons.search, color: secondaryPurple),
+        prefixIcon: const Icon(Icons.search, color: primaryLilac),
         suffixIcon: controller.text.isNotEmpty
             ? IconButton(
                 icon: const Icon(Icons.close, color: Colors.grey),
@@ -554,7 +574,7 @@ class SearchBar extends StatelessWidget {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: secondaryPurple, width: 2),
+          borderSide: const BorderSide(color: primaryLilac, width: 2),
         ),
       ),
     );

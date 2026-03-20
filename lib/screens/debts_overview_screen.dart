@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/client.dart';
 import '../models/purchase.dart';
+import '../providers/auth_provider.dart';
 import '../providers/client_provider.dart';
 import '../providers/provider_model_provider.dart';
 import '../services/database_service.dart';
@@ -28,15 +29,17 @@ class _DebtsOverviewScreenState extends State<DebtsOverviewScreen> {
   }
 
   Future<void> _loadInitialData() async {
+    final businessRuc = Provider.of<AuthProvider>(context, listen: false).currentUser?.businessRuc ?? '0000000000';
     await Future.wait([
-      Provider.of<ClientProvider>(context, listen: false).loadClients(),
-      Provider.of<ProviderModelProvider>(context, listen: false).loadProviders(),
+      Provider.of<ClientProvider>(context, listen: false).loadClients(businessRuc),
+      Provider.of<ProviderModelProvider>(context, listen: false).loadProviders(businessRuc),
     ]);
   }
 
   Future<void> _loadPendingPurchases() async {
+    final businessRuc = Provider.of<AuthProvider>(context, listen: false).currentUser?.businessRuc ?? '0000000000';
     setState(() => _loadingPurchases = true);
-    _pendingPurchases = await DatabaseService().getPendingPayments();
+    _pendingPurchases = await DatabaseService().getPendingPayments(businessRuc);
     setState(() => _loadingPurchases = false);
   }
 
@@ -50,8 +53,9 @@ class _DebtsOverviewScreenState extends State<DebtsOverviewScreen> {
           IconButton(
             icon: const Icon(Icons.refresh, color: Colors.white),
             onPressed: () {
-              Provider.of<ClientProvider>(context, listen: false).loadClients();
-              Provider.of<ProviderModelProvider>(context, listen: false).loadProviders();
+              final businessRuc = Provider.of<AuthProvider>(context, listen: false).currentUser?.businessRuc ?? '0000000000';
+              Provider.of<ClientProvider>(context, listen: false).loadClients(businessRuc);
+              Provider.of<ProviderModelProvider>(context, listen: false).loadProviders(businessRuc);
               _loadPendingPurchases();
             },
           ),
@@ -72,21 +76,21 @@ class _DebtsOverviewScreenState extends State<DebtsOverviewScreen> {
           final totalPayable = providerProvider.totalDebt;
           final netBalance = totalReceivable - totalPayable;
 
-          // Separar deudas por urgencia
+          // Clasificar deudas por monto real (Urgentes > 1000, Próximos el resto)
           final urgentDebts = clientsWithDebt.where((client) {
-            // Simular deudas urgentes (las primeras 3)
-            return client.accountBalance.abs() > 1000;
-          }).take(3).toList();
+            return client.accountBalance.abs() >= 1000;
+          }).toList();
 
           final upcomingDebts = clientsWithDebt
-              .where((client) => !urgentDebts.contains(client))
-              .take(3).toList();
+              .where((client) => client.accountBalance.abs() < 1000)
+              .toList();
 
           return RefreshIndicator(
             onRefresh: () async {
+              final businessRuc = Provider.of<AuthProvider>(context, listen: false).currentUser?.businessRuc ?? '0000000000';
               await Future.wait([
-                clientProvider.loadClients(),
-                providerProvider.loadProviders(),
+                clientProvider.loadClients(businessRuc),
+                providerProvider.loadProviders(businessRuc),
                 _loadPendingPurchases(),
               ]);
             },
@@ -201,14 +205,14 @@ class _DebtsOverviewScreenState extends State<DebtsOverviewScreen> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [Colors.purple[800]!, Colors.purple[600]!],
+          colors: [primaryLilac, secondaryLilac],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.purple.withOpacity(0.3),
+            color: primaryLilac.withOpacity(0.3),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),

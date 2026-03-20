@@ -8,7 +8,8 @@ class Product {
   final int minStock;
   final String barcode;
   final String category;
-  final String? imagePath; // ruta de la foto opcional
+  final String? imagePath;
+  final String? businessRuc; // ← NUEVO: v12
   final DateTime createdAt;
   final bool isActive;
 
@@ -23,6 +24,7 @@ class Product {
     required this.barcode,
     required this.category,
     this.imagePath,
+    this.businessRuc,
     required this.createdAt,
     this.isActive = true,
   });
@@ -39,6 +41,7 @@ class Product {
       'barcode': barcode,
       'category': category,
       'imagePath': imagePath,
+      'businessRuc': businessRuc,
       'createdAt': createdAt.toIso8601String(),
       'isActive': isActive ? 1 : 0,
     };
@@ -56,6 +59,7 @@ class Product {
       barcode: map['barcode'] ?? '',
       category: map['category'] ?? '',
       imagePath: map['imagePath'],
+      businessRuc: map['businessRuc'],
       createdAt: DateTime.parse(map['createdAt']),
       isActive: map['isActive'] == 1,
     );
@@ -72,6 +76,7 @@ class Product {
     String? barcode,
     String? category,
     String? imagePath,
+    String? businessRuc,
     DateTime? createdAt,
     bool? isActive,
   }) {
@@ -86,6 +91,7 @@ class Product {
       barcode: barcode ?? this.barcode,
       category: category ?? this.category,
       imagePath: imagePath ?? this.imagePath,
+      businessRuc: businessRuc ?? this.businessRuc,
       createdAt: createdAt ?? this.createdAt,
       isActive: isActive ?? this.isActive,
     );

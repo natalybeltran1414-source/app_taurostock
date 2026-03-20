@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/provider.dart';
 import '../providers/provider_model_provider.dart';
+import '../providers/auth_provider.dart';
 import '../services/database_service.dart';
 import '../widgets/custom_widgets.dart' as custom; // ← MEJORADO: con alias
 import 'provider_form_screen.dart';
@@ -22,7 +23,8 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
     super.initState();
     _searchController = TextEditingController();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<ProviderModelProvider>(context, listen: false).loadProviders();
+      final businessRuc = Provider.of<AuthProvider>(context, listen: false).currentUser?.businessRuc ?? '0000000000';
+      Provider.of<ProviderModelProvider>(context, listen: false).loadProviders(businessRuc);
     });
   }
 
@@ -138,8 +140,8 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        custom.secondaryPurple.withOpacity(0.2),
-                        custom.primaryPurple.withOpacity(0.1),
+                        custom.primaryLilac.withOpacity(0.2),
+                        custom.secondaryLilac.withOpacity(0.1),
                       ],
                     ),
                     borderRadius: BorderRadius.circular(12),
@@ -150,7 +152,7 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
                       style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
-                        color: custom.secondaryPurple,
+                        color: custom.primaryLilac,
                       ),
                     ),
                   ),
@@ -236,8 +238,8 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
                       );
                     },
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: custom.secondaryPurple,
-                      side: BorderSide(color: custom.secondaryPurple),
+                      foregroundColor: custom.primaryLilac,
+                      side: BorderSide(color: custom.primaryLilac),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
                   ),
@@ -307,10 +309,11 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
                         );
                         
                         if (confirm == true) {
+                          final businessRuc = Provider.of<AuthProvider>(context, listen: false).currentUser?.businessRuc ?? '0000000000';
                           final success = await Provider.of<ProviderModelProvider>(
                             context, 
                             listen: false
-                          ).deleteProvider(provider.id!);
+                          ).deleteProvider(provider.id!, businessRuc);
                           
                           if (success && mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
@@ -348,11 +351,11 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
             ListTile(
               contentPadding: EdgeInsets.zero,
               leading: CircleAvatar(
-                backgroundColor: custom.secondaryPurple.withOpacity(0.1),
-                child: Text(
-                  provider.name[0].toUpperCase(),
-                  style: TextStyle(color: custom.secondaryPurple),
-                ),
+                  backgroundColor: custom.primaryLilac.withOpacity(0.1),
+                  child: Text(
+                    provider.name[0].toUpperCase(),
+                    style: TextStyle(color: custom.primaryLilac),
+                  ),
               ),
               title: Text(provider.name),
               subtitle: Text('Deuda: \$${debtAmount.toStringAsFixed(2)}'),
@@ -390,12 +393,13 @@ class _ProvidersScreenState extends State<ProvidersScreen> {
               }
 
               // Aquí iría la lógica de pago
+              final businessRuc = Provider.of<AuthProvider>(context, listen: false).currentUser?.businessRuc ?? '0000000000';
               await DatabaseService()
-                  .updatePurchasePaymentStatus(provider.id!, 'pagado');
+                  .updatePurchasePaymentStatus(provider.id!, 'pagado', businessRuc);
 
               if (context.mounted) {
                 Provider.of<ProviderModelProvider>(context, listen: false)
-                    .loadProviders();
+                    .loadProviders(businessRuc);
                 Navigator.pop(context);
 
                 ScaffoldMessenger.of(context).showSnackBar(

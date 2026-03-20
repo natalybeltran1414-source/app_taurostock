@@ -15,9 +15,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
   late TextEditingController _passwordController;
   late TextEditingController _confirmPasswordController;
   late TextEditingController _fullNameController;
+  late TextEditingController _businessRucController;
+  late TextEditingController _businessNameController;
   bool _obscurePassword = true;
   bool _obscureConfirm = true;
-  String _selectedRole = 'operador';
+  String _selectedRole = 'empleado';
+  bool get _isAdmin => _selectedRole == 'admin';
 
   @override
   void initState() {
@@ -26,6 +29,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _passwordController = TextEditingController();
     _confirmPasswordController = TextEditingController();
     _fullNameController = TextEditingController();
+    _businessRucController = TextEditingController();
+    _businessNameController = TextEditingController();
   }
 
   @override
@@ -33,7 +38,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
-    _fullNameController.dispose();
+    _fullNameController = TextEditingController();
+    _businessRucController.dispose();
+    _businessNameController.dispose();
     super.dispose();
   }
 
@@ -56,6 +63,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
               controller: _fullNameController,
               prefixIcon: Icons.person_outlined,
             ),
+            custom.CustomTextField(
+              label: 'RUC del Negocio',
+              hint: 'Ej: 1234567890001',
+              controller: _businessRucController,
+              prefixIcon: Icons.numbers_outlined,
+              inputType: TextInputType.number,
+            ),
+            if (_isAdmin)
+              custom.CustomTextField(
+                label: 'Nombre del Negocio',
+                hint: 'Ej: Ferretería Tauro',
+                controller: _businessNameController,
+                prefixIcon: Icons.business_outlined,
+              ),
             custom.CustomTextField(
               label: 'Email',
               hint: 'correo@ejemplo.com',
@@ -98,17 +119,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 value: _selectedRole,
                 isExpanded: true,
                 underline: const SizedBox(),
-                icon: Icon(Icons.arrow_drop_down, color: custom.secondaryPurple),
+                icon: const Icon(Icons.arrow_drop_down, color: custom.primaryLilac),
                 items: const [
                   DropdownMenuItem(
-                    value: 'operador',
+                    value: 'empleado',
                     child: Padding(
                       padding: EdgeInsets.symmetric(horizontal: 12),
                       child: Row(
                         children: [
                           Icon(Icons.person_outline, size: 18),
                           SizedBox(width: 8),
-                          Text('Operador'),
+                          const Text('Empleado'),
                         ],
                       ),
                     ),
@@ -129,7 +150,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ],
                 onChanged: (value) {
                   setState(() {
-                    _selectedRole = value ?? 'operador';
+                    _selectedRole = value ?? 'empleado';
+
+                    if (!_isAdmin) {
+                      // El rol empleado no requiere nombre de negocio
+                      _businessNameController.clear();
+                    }
                   });
                 },
               ),
@@ -174,7 +200,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         if (_fullNameController.text.isEmpty ||
                             _emailController.text.isEmpty ||
                             _passwordController.text.isEmpty ||
-                            _confirmPasswordController.text.isEmpty) {
+                            _confirmPasswordController.text.isEmpty ||
+                            _businessRucController.text.isEmpty ||
+                            (_isAdmin && _businessNameController.text.isEmpty)) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text('Por favor completa todos los campos'),
@@ -206,20 +234,34 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         }
 
                         final success = await authProvider.register(
-                          _emailController.text.trim(),
-                          _passwordController.text,
-                          _fullNameController.text.trim(),
-                          _selectedRole,
+                          email: _emailController.text.trim(),
+                          password: _passwordController.text,
+                          fullName: _fullNameController.text.trim(),
+                          role: _selectedRole,
+                          businessRuc: _businessRucController.text.trim(),
+                          businessName:
+                              _isAdmin ? _businessNameController.text.trim() : '',
                         );
 
                         if (success && mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('✅ Cuenta creada exitosamente'),
-                              backgroundColor: Colors.green,
-                            ),
-                          );
-                          Navigator.of(context).pushReplacementNamed('/dashboard');
+                          if (_isAdmin) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('✅ Cuenta admin creada'),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+                            Navigator.of(context).pushReplacementNamed('/dashboard');
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Solicitud enviada. Espera aprobación del administrador.'),
+                                backgroundColor: Colors.blue,
+                              ),
+                            );
+                            // Empleado: no iniciar sesión ni acceder al dashboard
+                            Navigator.of(context).pushReplacementNamed('/login');
+                          }
                         }
                       },
                     ),

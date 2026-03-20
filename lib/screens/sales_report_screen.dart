@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/database_service.dart';
+import '../providers/auth_provider.dart';
+import 'package:provider/provider.dart';
 import '../widgets/custom_widgets.dart' as custom; // ← MEJORADO: con alias
 
 enum ReportPeriod { daily, weekly, monthly, yearly }
@@ -78,13 +80,15 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
     setState(() => _loading = true);
 
     try {
-      final sales = await _db.getSalesByDateRange(_startDate, _endDate);
+      final businessRuc = Provider.of<AuthProvider>(context, listen: false).currentUser?.businessRuc ?? '0000000000';
+      
+      final sales = await _db.getSalesByDateRange(_startDate, _endDate, businessRuc);
       _totalSales = sales.fold<double>(0, (sum, sale) => sum + sale.finalAmount);
 
-      final purchases = await _db.getPurchasesByDateRange(_startDate, _endDate);
+      final purchases = await _db.getPurchasesByDateRange(_startDate, _endDate, businessRuc);
       _totalPurchases = purchases.fold<double>(0, (sum, purchase) => sum + purchase.finalAmount);
 
-      final transactions = await _db.getTransactionsByDateRange(_startDate, _endDate);
+      final transactions = await _db.getTransactionsByDateRange(_startDate, _endDate, businessRuc);
       _totalIncome = transactions
           .where((t) => t.type == 'ingreso')
           .fold<double>(0, (sum, t) => sum + t.amount);
@@ -146,9 +150,9 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
                     margin: const EdgeInsets.only(bottom: 16),
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
-                      color: custom.secondaryPurple.withOpacity(0.1),
+                      color: custom.primaryLilac.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: custom.secondaryPurple.withOpacity(0.2)),
+                      border: Border.all(color: custom.primaryLilac.withOpacity(0.2)),
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -157,7 +161,7 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
                           _getPeriodName(),
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
-                            color: custom.secondaryPurple,
+                            color: custom.primaryLilac,
                           ),
                         ),
                         Text(
@@ -282,10 +286,10 @@ class _SalesReportScreenState extends State<SalesReportScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected ? custom.secondaryPurple : Colors.grey[100],
+          color: isSelected ? custom.primaryLilac : Colors.grey[100],
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: isSelected ? custom.secondaryPurple : Colors.grey[300]!,
+            color: isSelected ? custom.primaryLilac : Colors.grey[300]!,
           ),
         ),
         child: Center(

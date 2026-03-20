@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'services/database_service.dart';
+import 'services/auth_service.dart';
 
 // Providers
 import 'providers/auth_provider.dart';
@@ -11,6 +13,9 @@ import 'providers/purchase_provider.dart';
 import 'providers/purchase_cart_provider.dart';
 import 'providers/sale_provider.dart';
 import 'providers/transaction_provider.dart';
+import 'providers/cash_provider.dart';
+import 'providers/category_provider.dart';
+import 'providers/settings_provider.dart';
 
 // Screens
 import 'screens/login_screen.dart';
@@ -31,9 +36,15 @@ import 'screens/accounts_receivable_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/transactions_screen.dart';
 import 'screens/transaction_form_screen.dart';
-import 'screens/all_modules_screen.dart';
+import 'screens/cash_session_screen.dart';
+import 'screens/categories_screen.dart';
+import 'screens/expense_form_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // 🧹 Solo cerramos la sesión previa para evitar auto-login en desarrollo.
+  // No borramos la base de datos para conservar el usuario admin de arranque.
+  await AuthService().logout(); // borra SharedPreferences de sesión
   runApp(const MyApp());
 }
 
@@ -53,6 +64,9 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => PurchaseCartProvider()),
         ChangeNotifierProvider(create: (_) => SaleProvider()),
         ChangeNotifierProvider(create: (_) => TransactionProvider()),
+        ChangeNotifierProvider(create: (_) => CashProvider()),
+        ChangeNotifierProvider(create: (_) => CategoryProvider()),
+        ChangeNotifierProvider(create: (_) => SettingsProvider()),
       ],
       child: MaterialApp(
         title: 'TauroStock',
@@ -124,7 +138,9 @@ class MyApp extends StatelessWidget {
           '/profile': (context) => const ProfileScreen(),
           '/transactions': (context) => const TransactionsScreen(),
           '/transaction_form': (context) => const TransactionFormScreen(),
-          '/all_modules': (context) => const AllModulesScreen(),
+          '/cash_session': (context) => const CashSessionScreen(),
+          '/categories': (context) => const CategoriesScreen(),
+          '/expense_form': (context) => const ExpenseFormScreen(),
         },
       ),
     );
@@ -146,67 +162,11 @@ class _HomeWrapper extends StatelessWidget {
         }
 
         return authProvider.isLoggedIn 
-            ? const _MainWithBottomNav() 
+            ? const DashboardScreen() 
             : const LoginScreen();
       },
     );
   }
 }
 
-/// Contenedor principal con BottomNavigationBar de UN SOLO ITEM
-class _MainWithBottomNav extends StatefulWidget {
-  const _MainWithBottomNav();
-
-  @override
-  State<_MainWithBottomNav> createState() => _MainWithBottomNavState();
-}
-
-class _MainWithBottomNavState extends State<_MainWithBottomNav> {
-  int _currentIndex = 0;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      body: _buildBody(),
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: _currentIndex,
-        onTap: (index) {
-          if (index == 0) {
-            // Si ya estamos en MainScreen, no hacemos nada
-            return;
-          }
-          // Si el índice es 1, navegamos a AllModulesScreen
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => const AllModulesScreen(),
-            ),
-          );
-          // Restablecemos el índice a 0 para que el bottom nav siempre muestre "Inicio" seleccionado
-          setState(() {
-            _currentIndex = 0;
-          });
-        },
-        backgroundColor: const Color(0xFF5A189A),
-        selectedItemColor: Colors.white,
-        unselectedItemColor: Colors.grey[400],
-        type: BottomNavigationBarType.fixed,
-        items: const [
-          // SOLO DOS ITEMS: Inicio y el botón para ver todos los módulos
-          BottomNavigationBarItem(
-            icon: Icon(Icons.dashboard_outlined), 
-            label: 'Inicio',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(Icons.apps), 
-            label: 'Módulos',
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBody() {
-    // Siempre mostramos MainScreen cuando el índice es 0
-    return const MainScreen();
-  }
-}
+// Se elimina _MainWithBottomNav y sus clases relacionadas ya que DashboardScreen ahora maneja la navegación centralizada

@@ -4,3 +4,4 @@ export 'client.dart';
 export 'sale.dart';
 export 'purchase.dart';
 export 'provider.dart';
+export 'kardex.dart';

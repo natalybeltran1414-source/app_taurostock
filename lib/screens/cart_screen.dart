@@ -126,7 +126,7 @@ class _CartScreenState extends State<CartScreen> {
                           style: TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
-                            color: custom.secondaryPurple, // ← MEJORADO: usar color institucional
+                            color: custom.primaryLilac, // ← MEJORADO: usar color institucional
                           ),
                         ),
                       ],
@@ -161,7 +161,7 @@ class _CartScreenState extends State<CartScreen> {
       subtitle: '\$${item.product.salePrice.toStringAsFixed(2)} c/u',
       amount: '\$${item.totalPrice.toStringAsFixed(2)}',
       icon: Icons.inventory_2_outlined,
-      color: custom.secondaryPurple,
+      color: custom.primaryLilac,
       status: '${item.quantity} unidad(es)',
       onTap: null, // No necesario
       trailing: Row(
@@ -259,13 +259,13 @@ class _CartScreenState extends State<CartScreen> {
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: custom.secondaryPurple.withOpacity(0.1),
+              color: custom.primaryLilac.withOpacity(0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
               Icons.add,
               size: 18,
-              color: custom.secondaryPurple,
+              color: custom.primaryLilac,
             ),
           ),
         ),

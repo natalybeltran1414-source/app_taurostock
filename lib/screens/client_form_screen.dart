@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/client.dart';
 import '../providers/client_provider.dart';
+import '../providers/auth_provider.dart';
 import '../widgets/custom_widgets.dart' as custom; // ← MEJORADO: con alias
 
 class ClientFormScreen extends StatefulWidget {
@@ -130,6 +131,7 @@ class _ClientFormScreenState extends State<ClientFormScreen> {
                       setState(() => _isLoading = true);
                       
                       try {
+                        final businessRuc = Provider.of<AuthProvider>(context, listen: false).currentUser?.businessRuc ?? '0000000000';
                         final client = Client(
                           id: widget.client?.id,
                           name: _nameController.text.trim(),
@@ -140,6 +142,7 @@ class _ClientFormScreenState extends State<ClientFormScreen> {
                           totalPurchases: widget.client?.totalPurchases ?? 0,
                           accountBalance: widget.client?.accountBalance ?? 0,
                           createdAt: widget.client?.createdAt ?? DateTime.now(),
+                          businessRuc: businessRuc,
                         );
                         
                         final clientProvider =

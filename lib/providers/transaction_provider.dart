@@ -51,20 +51,13 @@ class TransactionProvider extends ChangeNotifier {
   }
 
   // Cargar transacciones
-  Future<void> loadTransactions() async {
+  Future<void> loadTransactions(String businessRuc) async {
     _isLoading = true;
     _errorMessage = '';
     notifyListeners();
 
     try {
-      final db = await _databaseService.database;
-      final result = await db.query(
-        'transactions',
-        where: 'isActive = 1',
-        orderBy: 'date DESC',
-      );
-      
-      _transactions = result.map((map) => Transaction.fromMap(map)).toList();
+      _transactions = await _databaseService.getAllTransactions(businessRuc);
       _isLoading = false;
       notifyListeners();
     } catch (e) {
@@ -75,11 +68,10 @@ class TransactionProvider extends ChangeNotifier {
   }
 
   // Crear transacción
-  Future<bool> addTransaction(Transaction transaction) async {
+  Future<bool> addTransaction(Transaction transaction, String businessRuc) async {
     try {
-      final db = await _databaseService.database;
-      await db.insert('transactions', transaction.toMap());
-      await loadTransactions();
+      await _databaseService.createTransaction(transaction);
+      await loadTransactions(transaction.businessRuc!);
       return true;
     } catch (e) {
       _errorMessage = 'Error creando transacción: $e';
@@ -89,16 +81,10 @@ class TransactionProvider extends ChangeNotifier {
   }
 
   // Actualizar transacción
-  Future<bool> updateTransaction(Transaction transaction) async {
+  Future<bool> updateTransaction(Transaction transaction, String businessRuc) async {
     try {
-      final db = await _databaseService.database;
-      await db.update(
-        'transactions',
-        transaction.toMap(),
-        where: 'id = ?',
-        whereArgs: [transaction.id],
-      );
-      await loadTransactions();
+      await _databaseService.updateTransaction(transaction);
+      await loadTransactions(transaction.businessRuc!);
       return true;
     } catch (e) {
       _errorMessage = 'Error actualizando transacción: $e';
@@ -108,16 +94,10 @@ class TransactionProvider extends ChangeNotifier {
   }
 
   // Eliminar transacción (soft delete)
-  Future<bool> deleteTransaction(int id) async {
+  Future<bool> deleteTransaction(int id, String businessRuc) async {
     try {
-      final db = await _databaseService.database;
-      await db.update(
-        'transactions',
-        {'isActive': 0},
-        where: 'id = ?',
-        whereArgs: [id],
-      );
-      await loadTransactions();
+      await _databaseService.deleteTransactionStatus(id, businessRuc);
+      await loadTransactions(businessRuc);
       return true;
     } catch (e) {
       _errorMessage = 'Error eliminando transacción: $e';

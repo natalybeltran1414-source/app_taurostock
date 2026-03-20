@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/client.dart';
 import '../providers/client_provider.dart';
+import '../providers/auth_provider.dart';
 import '../widgets/custom_widgets.dart' as custom; // ← MEJORADO: con alias
 import 'client_form_screen.dart';
 
@@ -20,7 +21,8 @@ class _ClientsScreenState extends State<ClientsScreen> {
     super.initState();
     _searchController = TextEditingController();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<ClientProvider>(context, listen: false).loadClients();
+      final businessRuc = Provider.of<AuthProvider>(context, listen: false).currentUser?.businessRuc ?? '0000000000';
+      Provider.of<ClientProvider>(context, listen: false).loadClients(businessRuc);
     });
   }
 
@@ -112,7 +114,7 @@ class _ClientsScreenState extends State<ClientsScreen> {
       subtitle: subtitle,
       amount: hasDebt ? '\$${debtAmount.toStringAsFixed(2)}' : '',
       icon: Icons.person,
-      color: hasDebt ? Colors.red : custom.secondaryPurple,
+      color: hasDebt ? Colors.red : custom.primaryLilac,
       status: hasDebt ? 'Debe \$${debtAmount.toStringAsFixed(2)}' : null,
       onTap: () {
         Navigator.of(context).push(
@@ -177,10 +179,11 @@ class _ClientsScreenState extends State<ClientsScreen> {
             );
             
             if (confirm == true) {
+              final businessRuc = Provider.of<AuthProvider>(context, listen: false).currentUser?.businessRuc ?? '0000000000';
               final success = await Provider.of<ClientProvider>(
                 context, 
                 listen: false
-              ).deleteClient(client.id!);
+              ).deleteClient(client.id!, businessRuc);
               
               if (success && mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(

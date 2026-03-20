@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/transaction.dart';
 import '../providers/transaction_provider.dart';
+import '../providers/auth_provider.dart';
 import '../widgets/custom_widgets.dart' as custom; // ← MEJORADO: con alias
 
 class TransactionFormScreen extends StatefulWidget {
@@ -145,12 +146,12 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                 leading: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: custom.secondaryPurple.withOpacity(0.1),
+                    color: custom.primaryLilac.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Icon(
                     Icons.calendar_today,
-                    color: custom.secondaryPurple,
+                    color: custom.primaryLilac,
                     size: 20,
                   ),
                 ),
@@ -170,7 +171,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                         return Theme(
                           data: Theme.of(context).copyWith(
                             colorScheme: ColorScheme.light(
-                              primary: custom.secondaryPurple,
+                              primary: custom.primaryLilac,
                             ),
                           ),
                           child: child!,
@@ -182,7 +183,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
                     }
                   },
                   style: TextButton.styleFrom(
-                    foregroundColor: custom.secondaryPurple,
+                    foregroundColor: custom.primaryLilac,
                   ),
                   child: const Text('Cambiar'),
                 ),
@@ -272,6 +273,8 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
 
     setState(() => _isLoading = true);
 
+    final businessRuc = Provider.of<AuthProvider>(context, listen: false).currentUser?.businessRuc ?? '0000000000';
+
     final transaction = Transaction(
       id: widget.transaction?.id,
       description: _descriptionController.text.trim(),
@@ -280,15 +283,16 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
       category: _selectedCategory,
       date: _selectedDate,
       notes: _notesController.text.isNotEmpty ? _notesController.text.trim() : null,
+      businessRuc: businessRuc,
     );
 
     final provider = Provider.of<TransactionProvider>(context, listen: false);
     
     bool success;
     if (widget.transaction == null) {
-      success = await provider.addTransaction(transaction);
+      success = await provider.addTransaction(transaction, businessRuc);
     } else {
-      success = await provider.updateTransaction(transaction);
+      success = await provider.updateTransaction(transaction, businessRuc);
     }
 
     if (success && mounted) {

@@ -13,13 +13,13 @@ class ProductProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String get errorMessage => _errorMessage;
 
-  Future<void> loadProducts() async {
+  Future<void> loadProducts(String businessRuc) async {
     _isLoading = true;
     _errorMessage = '';
     notifyListeners();
 
     try {
-      _products = await _databaseService.getAllProducts();
+      _products = await _databaseService.getAllProducts(businessRuc);
       _isLoading = false;
       notifyListeners();
     } catch (e) {
@@ -30,38 +30,11 @@ class ProductProvider extends ChangeNotifier {
   }
 
   Future<bool> addProduct(Product product) async {
-    // ========== LOGS DE DEPURACIÓN ==========
-    print('📦 PRODUCT_PROVIDER.addProduct - INICIO');
-    print('📦 Producto recibido: ${product.name}');
-    print('📦 ID: ${product.id}');
-    // ========================================
-    
     try {
-      // ========== LOG ==========
-      print('💾 Llamando a databaseService.createProduct...');
-      // =========================
-      
       final result = await _databaseService.createProduct(product);
-      
-      // ========== LOGS ==========
-      print('✅ databaseService.createProduct completado');
-      print('📦 Resultado: $result');
-      print('🔄 Recargando productos...');
-      // =========================
-      
-      await loadProducts();
-      
-      // ========== LOG ==========
-      print('✅ Productos recargados');
-      print('✅ addProduct completado exitosamente');
-      // =========================
-      
+      await loadProducts(product.businessRuc!);
       return true;
     } catch (e) {
-      // ========== LOG ==========
-      print('🔥 ERROR en addProduct: $e');
-      // =========================
-      
       _errorMessage = 'Error creando producto: $e';
       notifyListeners();
       return false;
@@ -71,7 +44,7 @@ class ProductProvider extends ChangeNotifier {
   Future<bool> updateProduct(Product product) async {
     try {
       await _databaseService.updateProduct(product);
-      await loadProducts();
+      await loadProducts(product.businessRuc!);
       return true;
     } catch (e) {
       _errorMessage = 'Error actualizando producto: $e';
@@ -80,10 +53,10 @@ class ProductProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> deleteProduct(int id) async {
+  Future<bool> deleteProduct(int id, String businessRuc) async {
     try {
-      await _databaseService.deleteProduct(id);
-      await loadProducts();
+      await _databaseService.deleteProduct(id, businessRuc);
+      await loadProducts(businessRuc);
       return true;
     } catch (e) {
       _errorMessage = 'Error eliminando producto: $e';
@@ -92,16 +65,16 @@ class ProductProvider extends ChangeNotifier {
     }
   }
 
-  Future<Product?> getProductById(int id) async {
-    return await _databaseService.getProductById(id);
+  Future<Product?> getProductById(int id, String businessRuc) async {
+    return await _databaseService.getProductById(id, businessRuc);
   }
 
-  Future<Product?> getProductByBarcode(String barcode) async {
-    return await _databaseService.getProductByBarcode(barcode);
+  Future<Product?> getProductByBarcode(String barcode, String businessRuc) async {
+    return await _databaseService.getProductByBarcode(barcode, businessRuc);
   }
 
-  Future<List<Product>> getLowStockProducts() async {
-    return await _databaseService.getLowStockProducts();
+  Future<List<Product>> getLowStockProducts(String businessRuc) async {
+    return await _databaseService.getLowStockProducts(businessRuc);
   }
 
   List<Product> searchProducts(String query) {

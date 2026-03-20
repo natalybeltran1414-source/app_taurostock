@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/provider.dart';
 import '../providers/provider_model_provider.dart';
+import '../providers/auth_provider.dart';
 import '../widgets/custom_widgets.dart' as custom; // ← MEJORADO: con alias
 
 class ProviderFormScreen extends StatefulWidget {
@@ -108,6 +109,8 @@ class _ProviderFormScreenState extends State<ProviderFormScreen> {
                   return;
                 }
 
+                final businessRuc = Provider.of<AuthProvider>(context, listen: false).currentUser?.businessRuc ?? '0000000000';
+
                 final provider = ProviderModel(
                   id: widget.provider?.id,
                   name: _nameController.text.trim(),
@@ -117,6 +120,7 @@ class _ProviderFormScreenState extends State<ProviderFormScreen> {
                   city: _cityController.text.trim(),
                   taxId: _taxIdController.text.trim(),
                   createdAt: widget.provider?.createdAt ?? DateTime.now(),
+                  businessRuc: businessRuc,
                 );
 
                 final provProvider =
@@ -124,9 +128,9 @@ class _ProviderFormScreenState extends State<ProviderFormScreen> {
 
                 bool success;
                 if (widget.provider == null) {
-                  success = await provProvider.addProvider(provider);
+                  success = await provProvider.addProvider(provider, businessRuc);
                 } else {
-                  success = await provProvider.updateProvider(provider);
+                  success = await provProvider.updateProvider(provider, businessRuc);
                 }
 
                 if (success && mounted) {

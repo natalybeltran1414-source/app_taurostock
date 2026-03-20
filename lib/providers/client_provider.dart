@@ -13,13 +13,13 @@ class ClientProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String get errorMessage => _errorMessage;
 
-  Future<void> loadClients() async {
+  Future<void> loadClients(String businessRuc) async {
     _isLoading = true;
     _errorMessage = '';
     notifyListeners();
 
     try {
-      _clients = await _databaseService.getAllClients();
+      _clients = await _databaseService.getAllClients(businessRuc);
       _isLoading = false;
       notifyListeners();
     } catch (e) {
@@ -32,7 +32,7 @@ class ClientProvider extends ChangeNotifier {
   Future<bool> addClient(Client client) async {
     try {
       await _databaseService.createClient(client);
-      await loadClients();
+      await loadClients(client.businessRuc!);
       return true;
     } catch (e) {
       _errorMessage = 'Error creando cliente: $e';
@@ -44,7 +44,7 @@ class ClientProvider extends ChangeNotifier {
   Future<bool> updateClient(Client client) async {
     try {
       await _databaseService.updateClient(client);
-      await loadClients();
+      await loadClients(client.businessRuc!);
       return true;
     } catch (e) {
       _errorMessage = 'Error actualizando cliente: $e';
@@ -53,10 +53,10 @@ class ClientProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> deleteClient(int id) async {
+  Future<bool> deleteClient(int id, String businessRuc) async {
     try {
-      await _databaseService.deleteClient(id);
-      await loadClients();
+      await _databaseService.deleteClient(id, businessRuc);
+      await loadClients(businessRuc);
       return true;
     } catch (e) {
       _errorMessage = 'Error eliminando cliente: $e';
@@ -65,12 +65,12 @@ class ClientProvider extends ChangeNotifier {
     }
   }
 
-  Future<Client?> getClientById(int id) async {
-    return await _databaseService.getClientById(id);
+  Future<Client?> getClientById(int id, String businessRuc) async {
+    return await _databaseService.getClientById(id, businessRuc);
   }
 
-  Future<List<Client>> getClientsWithDebt() async {
-    return await _databaseService.getClientsWithDebt();
+  Future<List<Client>> getClientsWithDebt(String businessRuc) async {
+    return await _databaseService.getClientsWithDebt(businessRuc);
   }
 
   List<Client> searchClients(String query) {
@@ -85,5 +85,15 @@ class ClientProvider extends ChangeNotifier {
 
   double get totalDebt {
     return _clients.fold(0, (sum, client) => sum + (client.debt));
+  }
+
+  Future<bool> redeemPoints(Client client, int pointsToRedeem) async {
+    if (client.loyaltyPoints < pointsToRedeem) return false;
+    
+    final updatedClient = client.copyWith(
+      loyaltyPoints: client.loyaltyPoints - pointsToRedeem,
+    );
+    
+    return await updateClient(updatedClient);
   }
 }

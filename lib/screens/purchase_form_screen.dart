@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/product.dart';
 import '../models/purchase.dart';
+import '../models/kardex.dart';
 import '../models/provider.dart';
 import '../providers/purchase_cart_provider.dart';
 import '../providers/purchase_provider.dart';
 import '../providers/provider_model_provider.dart';
 import '../providers/product_provider.dart';
+import '../providers/auth_provider.dart';
 import '../services/database_service.dart';
 import '../widgets/custom_widgets.dart' as custom; // ← MEJORADO: con alias
 
@@ -27,9 +29,10 @@ class _PurchaseFormScreenState extends State<PurchaseFormScreen> {
     super.initState();
     _searchController = TextEditingController();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<ProviderModelProvider>(context, listen: false).loadProviders();
-      Provider.of<PurchaseProvider>(context, listen: false).loadPurchases();
-      Provider.of<ProductProvider>(context, listen: false).loadProducts();
+      final businessRuc = Provider.of<AuthProvider>(context, listen: false).currentUser?.businessRuc ?? '0000000000';
+      Provider.of<ProviderModelProvider>(context, listen: false).loadProviders(businessRuc);
+      Provider.of<PurchaseProvider>(context, listen: false).loadPurchases(businessRuc);
+      Provider.of<ProductProvider>(context, listen: false).loadProducts(businessRuc);
     });
   }
 
@@ -72,7 +75,7 @@ class _PurchaseFormScreenState extends State<PurchaseFormScreen> {
           child: DropdownButtonFormField<ProviderModel>(
             decoration: InputDecoration(
               labelText: 'Proveedor',
-              prefixIcon: const Icon(Icons.local_shipping, color: custom.secondaryPurple),
+              prefixIcon: const Icon(Icons.local_shipping, color: custom.primaryLilac),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
@@ -146,7 +149,7 @@ class _PurchaseFormScreenState extends State<PurchaseFormScreen> {
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: custom.secondaryPurple,
+                      color: custom.primaryLilac,
                     ),
                   ),
                 ],
@@ -204,7 +207,7 @@ class _PurchaseFormScreenState extends State<PurchaseFormScreen> {
                         subtitle: 'Cant: ${item.quantity} x \$${item.product.costPrice.toStringAsFixed(2)}',
                         amount: '\$${item.totalPrice.toStringAsFixed(2)}',
                         icon: Icons.shopping_cart,
-                        color: custom.secondaryPurple,
+                        color: custom.primaryLilac,
                         onTap: null,
                         trailing: IconButton(
                           icon: const Icon(Icons.delete_outline, color: Colors.red),
@@ -280,7 +283,7 @@ class _PurchaseFormScreenState extends State<PurchaseFormScreen> {
                 child: DropdownButtonFormField<ProviderModel>(
                   decoration: InputDecoration(
                     labelText: 'Proveedor',
-                    prefixIcon: const Icon(Icons.local_shipping, color: custom.secondaryPurple),
+                    prefixIcon: const Icon(Icons.local_shipping, color: custom.primaryLilac),
                   ),
                   items: providerProvider.providers
                       .map(
@@ -314,7 +317,7 @@ class _PurchaseFormScreenState extends State<PurchaseFormScreen> {
                             subtitle: 'Cant: ${item.quantity} • Unit: \$${item.product.costPrice.toStringAsFixed(2)}',
                             amount: '\$${item.totalPrice.toStringAsFixed(2)}',
                             icon: Icons.shopping_cart,
-                            color: custom.secondaryPurple,
+                            color: custom.primaryLilac,
                             onTap: null,
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -356,7 +359,7 @@ class _PurchaseFormScreenState extends State<PurchaseFormScreen> {
                           '\$${purchaseCart.total.toStringAsFixed(2)}',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
-                            color: custom.secondaryPurple,
+                            color: custom.primaryLilac,
                             fontSize: 18,
                           ),
                         ),
@@ -454,7 +457,7 @@ class _PurchaseFormScreenState extends State<PurchaseFormScreen> {
                   'Costo: \$${product.costPrice.toStringAsFixed(2)}',
                   style: TextStyle(
                     fontSize: 12,
-                    color: custom.secondaryPurple,
+                    color: custom.primaryLilac,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -503,6 +506,10 @@ class _PurchaseFormScreenState extends State<PurchaseFormScreen> {
       return;
     }
 
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final businessRuc = authProvider.currentUser?.businessRuc ?? '0000000000';
+    final userId = authProvider.currentUser?.id;
+
     final purchase = Purchase(
       providerId: _selectedProvider!.id!,
       total: purchaseCart.subtotal,
@@ -520,6 +527,7 @@ class _PurchaseFormScreenState extends State<PurchaseFormScreen> {
                 totalPrice: i.totalPrice,
               ))
           .toList(),
+      businessRuc: businessRuc,
     );
 
     final db = DatabaseService();
@@ -539,10 +547,25 @@ class _PurchaseFormScreenState extends State<PurchaseFormScreen> {
       final updatedProduct = item.product.copyWith(
           quantity: item.product.quantity + item.quantity);
       await db.updateProduct(updatedProduct);
+
+      // ← NUEVO: Registrar movimiento en Kardex
+      final kardexMovement = KardexMovement(
+        productId: item.product.id!,
+        productName: item.product.name,
+        date: DateTime.now(),
+        type: 'entrada',
+        description: 'Compra #${purchaseId}',
+        quantity: item.quantity,
+        previousStock: item.product.quantity,
+        newStock: updatedProduct.quantity,
+        businessRuc: businessRuc,
+        userId: userId,
+      );
+      await db.createKardexMovement(kardexMovement);
     }
 
     purchaseCart.clear();
-    Provider.of<PurchaseProvider>(context, listen: false).loadPurchases();
+    Provider.of<PurchaseProvider>(context, listen: false).loadPurchases(businessRuc);
 
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -585,7 +608,7 @@ class _PurchaseFormScreenState extends State<PurchaseFormScreen> {
                 Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: custom.secondaryPurple,
+                backgroundColor: custom.primaryLilac,
               ),
               child: const Text('Agregar'),
             ),

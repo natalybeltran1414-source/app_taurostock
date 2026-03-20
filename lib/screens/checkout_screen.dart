@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/client.dart';
 import '../models/sale.dart';
+import '../models/kardex.dart';
 import '../providers/cart_provider.dart';
 import '../providers/client_provider.dart';
+import '../providers/auth_provider.dart';
 import '../services/database_service.dart';
 import '../widgets/custom_widgets.dart' as custom; // ← MEJORADO: con alias
 
@@ -22,8 +24,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
   
   // Variables de estado
   Client? _selectedClient;
-  String _paymentMethod = 'efectivo';
-  String _paymentStatus = 'pagado'; // 'pagado' o 'pendiente'
+  List<SalePayment> _payments = []; // ← NUEVO: Lista de pagos
   bool _showClientResults = false;
   final FocusNode _clientSearchFocus = FocusNode();
   
@@ -56,16 +57,23 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     super.dispose();
   }
 
-  // Calcular vuelto
+  // Calcular total pagado
+  double get _totalPaid => _payments.fold(0, (sum, p) => sum + p.amount);
+
+  // Calcular vuelto (solo si el último pago es efectivo y supera el total)
   void _calculateChange(String value) {
-    double received = double.tryParse(value) ?? 0;
-    double total = Provider.of<CartProvider>(context, listen: false).total;
+    // Esta lógica cambiará para ser más dinámica por cada pago de efectivo
+  }
+
+  void _addPayment(String method, double amount) {
     setState(() {
-      _cashReceived = received;
-      _change = received - total;
-      _changeController.text = _change >= 0 
-          ? '\$${_change.toStringAsFixed(2)}' 
-          : 'Faltan \$${(-_change).toStringAsFixed(2)}';
+      _payments.add(SalePayment(saleId: 0, method: method, amount: amount));
+    });
+  }
+
+  void _removePayment(int index) {
+    setState(() {
+      _payments.removeAt(index);
     });
   }
 
@@ -93,15 +101,10 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             _buildClientSearch(),
             const SizedBox(height: 20),
             
-            // Métodos de pago (MEJORADO con StatusBadge)
-            _buildPaymentMethods(),
-            const SizedBox(height: 20),
-            
-            // Estado de pago (SOLO para crédito)
-            if (_paymentMethod == 'credito') _buildPaymentStatus(),
-            
-            // Calculadora de vuelto (SOLO para efectivo)
-            if (_paymentMethod == 'efectivo') _buildChangeCalculator(),
+            // Gestión de Pagos Mixtos (NUEVO)
+            Consumer<CartProvider>(
+              builder: (context, cartProvider, _) => _buildMixedPaymentSection(cartProvider),
+            ),
             
             const SizedBox(height: 30),
             
@@ -143,7 +146,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                   subtitle: '${item.quantity} x \$${item.product.salePrice.toStringAsFixed(2)}',
                   amount: '\$${item.totalPrice.toStringAsFixed(2)}',
                   icon: Icons.shopping_cart,
-                  color: custom.secondaryPurple,
+                  color: custom.primaryLilac,
                   status: '${item.quantity} unidad(es)',
                   onTap: null,
                 );
@@ -164,12 +167,12 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                custom.secondaryPurple.withOpacity(0.1),
-                custom.secondaryPurple.withOpacity(0.05),
+                custom.primaryLilac.withOpacity(0.1),
+                custom.primaryLilac.withOpacity(0.05),
               ],
             ),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: custom.secondaryPurple.withOpacity(0.2)),
+            border: Border.all(color: custom.primaryLilac.withOpacity(0.2)),
           ),
           child: Column(
             children: [
@@ -208,7 +211,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      color: custom.secondaryPurple,
+                      color: custom.primaryLilac,
                     ),
                   ),
                 ],
@@ -244,19 +247,19 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
-                  custom.secondaryPurple.withOpacity(0.1),
-                  custom.secondaryPurple.withOpacity(0.05),
+                  custom.primaryLilac.withOpacity(0.1),
+                  custom.primaryLilac.withOpacity(0.05),
                 ],
               ),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: custom.secondaryPurple),
+              border: Border.all(color: custom.primaryLilac),
             ),
             child: Row(
               children: [
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: custom.secondaryPurple,
+                    color: custom.primaryLilac,
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(Icons.person, color: Colors.white, size: 20),
@@ -340,11 +343,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
                       leading: CircleAvatar(
                         backgroundColor: hasDebt
                             ? Colors.red.withOpacity(0.1)
-                            : custom.secondaryPurple.withOpacity(0.1),
+                            : custom.primaryLilac.withOpacity(0.1),
                         child: Text(
                           client.name[0].toUpperCase(),
                           style: TextStyle(
-                            color: hasDebt ? Colors.red : custom.secondaryPurple,
+                            color: hasDebt ? Colors.red : custom.primaryLilac,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -377,160 +380,197 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
-  // ← MEJORADO: Métodos de pago con StatusBadge
-  Widget _buildPaymentMethods() {
+  // ← NUEVO: Sección de pagos mixtos rediseñada
+  Widget _buildMixedPaymentSection(CartProvider cartProvider) {
+    final total = cartProvider.total;
+    final remaining = total - _totalPaid;
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Método de pago',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-        ),
+        custom.SectionHeader(title: 'Pagos Registrados'),
         const SizedBox(height: 12),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            _buildPaymentChip('Efectivo', Icons.money, 'efectivo'),
-            _buildPaymentChip('Tarjeta', Icons.credit_card, 'tarjeta'),
-            _buildPaymentChip('Transferencia', Icons.swap_horiz, 'transferencia'),
-            _buildPaymentChip('Crédito', Icons.receipt, 'credito'),
-          ],
+        
+        // Lista de pagos realizados
+        if (_payments.isEmpty)
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: Colors.grey[50],
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey[200]!),
+            ),
+            child: const Center(
+              child: Text('No hay pagos registrados', style: TextStyle(color: Colors.grey)),
+            ),
+          )
+        else
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: _payments.length,
+            itemBuilder: (context, index) {
+              final payment = _payments[index];
+              return Card(
+                elevation: 0,
+                margin: const EdgeInsets.only(bottom: 8),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  side: BorderSide(color: Colors.grey[200]!),
+                ),
+                child: ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: custom.primaryLilac.withOpacity(0.1),
+                    child: Icon(_getPaymentIcon(payment.method), color: custom.primaryLilac, size: 20),
+                  ),
+                  title: Text(payment.method.capitalize()),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '\$${payment.amount.toStringAsFixed(2)}',
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete_outline, color: Colors.red),
+                        onPressed: () => _removePayment(index),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+          
+        const SizedBox(height: 20),
+        
+        // Resumen de saldo
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: remaining <= 0 ? Colors.green[50] : Colors.orange[50],
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Pendiente:', style: TextStyle(color: Colors.grey[700])),
+                  Text(
+                    remaining > 0 ? '\$${remaining.toStringAsFixed(2)}' : '\$0.00',
+                    style: TextStyle(
+                      fontSize: 20, 
+                      fontWeight: FontWeight.bold,
+                      color: remaining > 0 ? Colors.orange[800] : Colors.green[800],
+                    ),
+                  ),
+                ],
+              ),
+              if (remaining < 0)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text('Vuelto:', style: TextStyle(color: Colors.grey[700])),
+                    Text(
+                      '\$${remaining.abs().toStringAsFixed(2)}',
+                      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.green),
+                    ),
+                  ],
+                ),
+            ],
+          ),
         ),
+        
+        const SizedBox(height: 24),
+        
+        // Selector de nuevo pago
+        if (remaining > 0) ...[
+          const Text('Añadir Pago', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              _buildAddPaymentChip('Efectivo', Icons.money, 'efectivo', remaining),
+              _buildAddPaymentChip('Tarjeta', Icons.credit_card, 'tarjeta', remaining),
+              _buildAddPaymentChip('Transfer', Icons.swap_horiz, 'transferencia', remaining),
+              _buildAddPaymentChip('Crédito', Icons.receipt, 'credito', remaining),
+            ],
+          ),
+        ],
       ],
     );
   }
 
-  Widget _buildPaymentChip(String label, IconData icon, String value) {
-    final isSelected = _paymentMethod == value;
-    return FilterChip(
+  Widget _buildAddPaymentChip(String label, IconData icon, String method, double remaining) {
+    return ActionChip(
+      avatar: Icon(icon, size: 18, color: custom.primaryLilac),
       label: Text(label),
-      avatar: Icon(icon, size: 18, color: isSelected ? custom.secondaryPurple : Colors.grey),
-      selected: isSelected,
-      onSelected: (selected) {
-        setState(() => _paymentMethod = value);
-      },
-      backgroundColor: Colors.grey[100],
-      selectedColor: custom.secondaryPurple.withOpacity(0.2),
-      checkmarkColor: custom.secondaryPurple,
-      labelStyle: TextStyle(
-        color: isSelected ? custom.secondaryPurple : Colors.black87,
-        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+      onPressed: () => _showAddPaymentDialog(method, remaining),
+      backgroundColor: Colors.white,
+      side: BorderSide(color: custom.primaryLilac.withOpacity(0.3)),
+    );
+  }
+
+  void _showAddPaymentDialog(String method, double remaining) {
+    final controller = TextEditingController(text: remaining.toStringAsFixed(2));
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Añadir Pago: ${method.capitalize()}'),
+        content: TextField(
+          controller: controller,
+          keyboardType: TextInputType.number,
+          autofocus: true,
+          decoration: const InputDecoration(
+            labelText: 'Monto',
+            prefixText: '\$ ',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancelar')),
+          custom.CustomButton(
+            label: 'AGREGAR',
+            onPressed: () {
+              final amount = double.tryParse(controller.text) ?? 0;
+              if (amount > 0) {
+                if (method == 'credito' && _selectedClient == null) {
+                  _showErrorDialog('Debe seleccionar un cliente para pagos a crédito');
+                  return;
+                }
+                _addPayment(method, amount);
+                Navigator.pop(context);
+              }
+            },
+          ),
+        ],
       ),
     );
   }
 
-  // ← MEJORADO: Estado de pago con StatusBadge
-  Widget _buildPaymentStatus() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Estado del pago',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: ChoiceChip(
-                label: const Text('Pagado'),
-                selected: _paymentStatus == 'pagado',
-                onSelected: (_) => setState(() => _paymentStatus = 'pagado'),
-                selectedColor: Colors.green.withOpacity(0.2),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: ChoiceChip(
-                label: const Text('Pendiente'),
-                selected: _paymentStatus == 'pendiente',
-                onSelected: (_) => setState(() => _paymentStatus = 'pendiente'),
-                selectedColor: Colors.orange.withOpacity(0.2),
-              ),
-            ),
-          ],
-        ),
-      ],
-    );
+  IconData _getPaymentIcon(String method) {
+    switch (method) {
+      case 'efectivo': return Icons.money;
+      case 'tarjeta': return Icons.credit_card;
+      case 'transferencia': return Icons.swap_horiz;
+      case 'credito': return Icons.receipt;
+      default: return Icons.help_outline;
+    }
   }
 
-  // ← MEJORADO: Calculadora de vuelto
-  Widget _buildChangeCalculator() {
-    return Consumer<CartProvider>(
-      builder: (context, cartProvider, _) {
-        final total = cartProvider.total;
-        
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Cálculo de vuelto',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _cashReceivedController,
-                    keyboardType: TextInputType.number,
-                    onChanged: _calculateChange,
-                    decoration: InputDecoration(
-                      labelText: 'Recibido',
-                      prefixText: '\$ ',
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
-                    decoration: BoxDecoration(
-                      color: _change >= 0 ? Colors.green[50] : Colors.red[50],
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.grey[300]!),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text('Vuelto:'),
-                        Text(
-                          _change >= 0 
-                              ? '\$${_change.toStringAsFixed(2)}'
-                              : 'Faltan \$${(-_change).toStringAsFixed(2)}',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: _change >= 0 ? Colors.green : Colors.red,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            if (_cashReceived > 0 && _cashReceived < total)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Text(
-                  '❌ Monto insuficiente: faltan \$${(total - _cashReceived).toStringAsFixed(2)}',
-                  style: TextStyle(color: Colors.red[700], fontSize: 12),
-                ),
-              ),
-          ],
-        );
-      },
-    );
-  }
-
-  // Diálogo de confirmación (SIN CAMBIOS)
+  // Diálogo de confirmación actualizado
   Future<void> _showConfirmDialog(CartProvider cartProvider) async {
     final total = cartProvider.total;
+    final remaining = total - _totalPaid;
     
+    if (remaining > 0) {
+      _showErrorDialog('Aún falta cubrir \$${remaining.toStringAsFixed(2)} del total.');
+      return;
+    }
+
     return showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -539,9 +579,14 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Total: \$${total.toStringAsFixed(2)}'),
-            Text('Método de pago: ${_paymentMethod.capitalize()}'),
-            if (_selectedClient != null) Text('Cliente: ${_selectedClient!.name}'),
+            Text('Total: \$${total.toStringAsFixed(2)}', style: const TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            const Text('Pagos:'),
+            ..._payments.map((p) => Text('• ${p.method.capitalize()}: \$${p.amount.toStringAsFixed(2)}')),
+            if (_selectedClient != null) ...[
+              const SizedBox(height: 8),
+              Text('Cliente: ${_selectedClient!.name}'),
+            ],
             const SizedBox(height: 16),
             const Text('¿Confirmar la venta?'),
           ],
@@ -573,27 +618,36 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
       return;
     }
 
-    if (_paymentMethod == 'credito' && _selectedClient == null) {
-      _showErrorDialog('Selecciona un cliente para ventas a crédito');
+    if (_payments.isEmpty) {
+      _showErrorDialog('No se han registrado pagos');
       return;
     }
 
-    if (_paymentMethod == 'efectivo' && _cashReceived < total) {
-      _showErrorDialog('El monto recibido es insuficiente');
+    final remaining = total - _totalPaid;
+    if (remaining > 0) {
+      _showErrorDialog('El monto pagado es insuficiente');
       return;
     }
 
     try {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final businessRuc = authProvider.currentUser?.businessRuc ?? '0000000000';
+      final userId = authProvider.currentUser?.id;
       final databaseService = DatabaseService();
+      
+      // Determinar método de pago principal o "mixto"
+      String finalMethod = _payments.length == 1 ? _payments.first.method : 'mixto';
+      bool hasCredit = _payments.any((p) => p.method == 'credito');
 
       final sale = Sale(
         clientId: _selectedClient?.id ?? 0,
         total: cartProvider.subtotal,
         discount: 0,
         finalAmount: total,
-        paymentMethod: _paymentMethod,
+        paymentMethod: finalMethod,
         saleDate: DateTime.now(),
-        status: _paymentStatus == 'pendiente' ? 'pendiente' : 'completada',
+        businessRuc: businessRuc,
+        status: hasCredit ? 'pendiente' : 'completada',
         items: cartProvider.items
             .map(
               (item) => SaleItem(
@@ -606,6 +660,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
               ),
             )
             .toList(),
+        payments: _payments,
       );
 
       final saleId = await databaseService.createSale(sale);
@@ -625,6 +680,21 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
           quantity: item.product.quantity - item.quantity,
         );
         await databaseService.updateProduct(updatedProduct);
+
+        // ← NUEVO: Registrar movimiento en Kardex
+        final kardexMovement = KardexMovement(
+          productId: item.product.id!,
+          productName: item.product.name,
+          date: DateTime.now(),
+          type: 'salida',
+          description: 'Venta #${saleId}',
+          quantity: item.quantity,
+          previousStock: item.product.quantity,
+          newStock: updatedProduct.quantity,
+          businessRuc: businessRuc,
+          userId: userId,
+        );
+        await databaseService.createKardexMovement(kardexMovement);
       }
 
       cartProvider.clear();
@@ -667,9 +737,11 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
             const Icon(Icons.check_circle, color: Colors.green, size: 60),
             const SizedBox(height: 16),
             Text('Total: \$${total.toStringAsFixed(2)}'),
-            Text('Método: ${_paymentMethod.capitalize()}'),
-            if (_change > 0 && _paymentMethod == 'efectivo') 
-              Text('Vuelto: \$${_change.toStringAsFixed(2)}'),
+            const SizedBox(height: 8),
+            const Text('Pagos recibidos:'),
+            ..._payments.map((p) => Text('• ${p.method.capitalize()}: \$${p.amount.toStringAsFixed(2)}', style: const TextStyle(fontSize: 12))),
+            if (_totalPaid > total)
+              Text('Vuelto: \$${(_totalPaid - total).toStringAsFixed(2)}', style: const TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
           ],
         ),
         actions: [

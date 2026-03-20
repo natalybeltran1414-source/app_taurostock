@@ -7,7 +7,8 @@ class ProviderModel {
   final String city;
   final String taxId;
   final double totalPurchases;
-  final double accountBalance; // Deuda a proveedores
+  final double accountBalance;
+  final String? businessRuc; // ← NUEVO: v12
   final DateTime createdAt;
   final bool isActive;
 
@@ -21,6 +22,7 @@ class ProviderModel {
     this.taxId = '',
     this.totalPurchases = 0,
     this.accountBalance = 0,
+    this.businessRuc,
     required this.createdAt,
     this.isActive = true,
   });
@@ -36,6 +38,7 @@ class ProviderModel {
       'taxId': taxId,
       'totalPurchases': totalPurchases,
       'accountBalance': accountBalance,
+      'businessRuc': businessRuc,
       'createdAt': createdAt.toIso8601String(),
       'isActive': isActive ? 1 : 0,
     };
@@ -52,6 +55,7 @@ class ProviderModel {
       taxId: map['taxId'] ?? '',
       totalPurchases: map['totalPurchases']?.toDouble() ?? 0.0,
       accountBalance: map['accountBalance']?.toDouble() ?? 0.0,
+      businessRuc: map['businessRuc'],
       createdAt: DateTime.parse(map['createdAt']),
       isActive: map['isActive'] == 1,
     );
@@ -67,6 +71,7 @@ class ProviderModel {
     String? taxId,
     double? totalPurchases,
     double? accountBalance,
+    String? businessRuc,
     DateTime? createdAt,
     bool? isActive,
   }) {
@@ -80,6 +85,7 @@ class ProviderModel {
       taxId: taxId ?? this.taxId,
       totalPurchases: totalPurchases ?? this.totalPurchases,
       accountBalance: accountBalance ?? this.accountBalance,
+      businessRuc: businessRuc ?? this.businessRuc,
       createdAt: createdAt ?? this.createdAt,
       isActive: isActive ?? this.isActive,
     );

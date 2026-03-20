@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../models/product.dart';
 import '../providers/cart_provider.dart';
 import '../providers/product_provider.dart';
+import '../providers/auth_provider.dart';
 import '../widgets/custom_widgets.dart' as custom; // ← MEJORADO: con alias
 import 'cart_screen.dart';
 
@@ -21,7 +22,8 @@ class _InventoryScreenState extends State<InventoryScreen> {
     super.initState();
     _searchController = TextEditingController();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<ProductProvider>(context, listen: false).loadProducts();
+      final businessRuc = Provider.of<AuthProvider>(context, listen: false).currentUser?.businessRuc ?? '0000000000';
+      Provider.of<ProductProvider>(context, listen: false).loadProducts(businessRuc);
     });
   }
 
@@ -99,7 +101,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 ),
               );
             },
-            backgroundColor: custom.secondaryPurple, // ← MEJORADO: usar color institucional
+            backgroundColor: custom.primaryLilac, // ← MEJORADO: usar color institucional
             icon: const Icon(Icons.shopping_cart, color: Colors.white),
             label: Text(
               'Ver Carrito (${cart.itemCount})',
@@ -135,7 +137,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                   child: Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
-                      color: custom.secondaryPurple.withOpacity(0.1), // ← MEJORADO
+                      color: custom.primaryLilac.withOpacity(0.1), // ← MEJORADO
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Center(
@@ -144,7 +146,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                         size: 40,
                         color: isOutOfStock 
                             ? Colors.grey[400] 
-                            : custom.secondaryPurple, // ← MEJORADO
+                            : custom.primaryLilac, // ← MEJORADO
                       ),
                     ),
                   ),
@@ -169,7 +171,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: custom.secondaryPurple, // ← MEJORADO
+                    color: custom.primaryLilac, // ← MEJORADO
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -233,7 +235,7 @@ class _InventoryScreenState extends State<InventoryScreen> {
                 child: Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: custom.secondaryPurple, // ← MEJORADO
+                    color: custom.primaryLilac, // ← MEJORADO
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(

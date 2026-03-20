@@ -37,13 +37,13 @@ class PurchaseProvider extends ChangeNotifier {
     return _purchases.where((p) => p.paymentStatus == 'pendiente').toList();
   }
 
-  Future<void> loadPurchases() async {
+  Future<void> loadPurchases(String businessRuc) async {
     _isLoading = true;
     _errorMessage = '';
     notifyListeners();
 
     try {
-      _purchases = await _databaseService.getAllPurchases();
+      _purchases = await _databaseService.getAllPurchases(businessRuc);
       _isLoading = false;
       notifyListeners();
     } catch (e) {
@@ -56,25 +56,31 @@ class PurchaseProvider extends ChangeNotifier {
   Future<bool> addPurchase(Purchase purchase) async {
     try {
       await _databaseService.createPurchase(purchase);
-      await loadPurchases();
+      await loadPurchases(purchase.businessRuc!);
       return true;
     } catch (e) {
-      _errorMessage = 'Error registrando compra: $e';
+      _errorMessage = 'Error creando compra: $e';
       notifyListeners();
       return false;
     }
   }
 
-  Future<bool> markAsPaid(int purchaseId) async {
+  Future<bool> updatePurchaseStatus(int id, String status, String businessRuc) async {
     try {
-      await _databaseService.updatePurchasePaymentStatus(purchaseId, 'pagado');
-      await loadPurchases();
-      return true;
+      final success = await _databaseService.updatePurchasePaymentStatus(id, status, businessRuc);
+      if (success) {
+        await loadPurchases(businessRuc);
+      }
+      return success;
     } catch (e) {
-      _errorMessage = 'Error actualizando pago: $e';
+      _errorMessage = 'Error actualizando estado de compra: $e';
       notifyListeners();
       return false;
     }
+  }
+
+  Future<bool> markAsPaid(int id, String businessRuc) async {
+    return await updatePurchaseStatus(id, 'pagado', businessRuc);
   }
 
   List<Purchase> searchPurchases(String query) {

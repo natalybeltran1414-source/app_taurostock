@@ -6,9 +6,11 @@ class Client {
   final String address;
   final String? identification; 
   final double totalPurchases;
-  final double accountBalance; // Saldo a favor o deuda
+  final double accountBalance;
+  final String? businessRuc; // ← NUEVO: v12
   final DateTime createdAt;
   final bool isActive;
+  final int loyaltyPoints;
 
   Client({
     this.id,
@@ -16,11 +18,13 @@ class Client {
     required this.phone,
     required this.email,
     required this.address,
-    this.identification, // ← NUEVO
+    this.identification,
     this.totalPurchases = 0,
     this.accountBalance = 0,
+    this.businessRuc,
     required this.createdAt,
     this.isActive = true,
+    this.loyaltyPoints = 0,
   });
 
   Map<String, dynamic> toMap() {
@@ -33,6 +37,8 @@ class Client {
       'identification': identification,
       'totalPurchases': totalPurchases,
       'accountBalance': accountBalance,
+      'businessRuc': businessRuc,
+      'loyaltyPoints': loyaltyPoints,
       'createdAt': createdAt.toIso8601String(),
       'isActive': isActive ? 1 : 0,
     };
@@ -45,8 +51,11 @@ class Client {
       phone: map['phone'] ?? '',
       email: map['email'] ?? '',
       address: map['address'] ?? '',
+      identification: map['identification'],
       totalPurchases: map['totalPurchases']?.toDouble() ?? 0.0,
       accountBalance: map['accountBalance']?.toDouble() ?? 0.0,
+      businessRuc: map['businessRuc'],
+      loyaltyPoints: map['loyaltyPoints'] ?? 0,
       createdAt: DateTime.parse(map['createdAt']),
       isActive: map['isActive'] == 1,
     );
@@ -61,8 +70,10 @@ class Client {
     String? identification,
     double? totalPurchases,
     double? accountBalance,
+    String? businessRuc,
     DateTime? createdAt,
     bool? isActive,
+    int? loyaltyPoints,
   }) {
     return Client(
       id: id ?? this.id,
@@ -73,6 +84,8 @@ class Client {
       identification: identification ?? this.identification, 
       totalPurchases: totalPurchases ?? this.totalPurchases,
       accountBalance: accountBalance ?? this.accountBalance,
+      businessRuc: businessRuc ?? this.businessRuc,
+      loyaltyPoints: loyaltyPoints ?? this.loyaltyPoints,
       createdAt: createdAt ?? this.createdAt,
       isActive: isActive ?? this.isActive,
     );
