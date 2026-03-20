@@ -43,3 +43,13 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Project temp artifacts
+# Text/markdown reports that are generated ad hoc and should not be committed
+full_final_analysis*.txt
+full_final_analysis*.md
+*_analysis*.txt
+*_analysis*.md
+*.tmp.md
+*.draft.md
+*.tmp.txt
