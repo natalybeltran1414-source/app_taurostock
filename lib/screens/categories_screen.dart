@@ -19,13 +19,27 @@ class _CategoriesScreenState extends State<CategoriesScreen> {
   final List<IconData> _iconPresets = [
     Icons.category, Icons.inventory_2, Icons.shopping_basket, 
     Icons.local_offer, Icons.star, Icons.fastfood, 
-    Icons.checkroom, Icons.home_repair_service, Icons.computer
+    Icons.checkroom, Icons.home_repair_service, Icons.computer,
+    Icons.receipt_long, Icons.point_of_sale, Icons.pets,
+    Icons.health_and_safety, Icons.sports_soccer, Icons.spa,
+    Icons.construction, Icons.brush, Icons.book_outlined,
+    Icons.coffee, Icons.cookie, Icons.emoji_events,
+    Icons.local_florist, Icons.local_drink, Icons.luggage,
+    Icons.smartphone, Icons.watch, Icons.headphones,
+    Icons.toys, Icons.child_care, Icons.hotel
   ];
 
   final List<Color> _colorPresets = [
     custom.primaryLilac, custom.accentPurple, Colors.blue, 
     Colors.teal, Colors.green, Colors.orange, 
-    Colors.red, Colors.pink, Colors.brown
+    Colors.red, Colors.pink, Colors.brown,
+    Colors.indigo, Colors.cyan, Colors.deepPurple,
+    Colors.deepOrange, Colors.amber, Colors.lime,
+    Colors.lightBlue, Colors.lightGreen, Colors.grey,
+    Colors.blueGrey, const Color(0xFF6D4C41), // brown mid
+    const Color(0xFF00897B), // teal muted
+    const Color(0xFF9C27B0), // purple strong
+    const Color(0xFF004D40)  // dark teal
   ];
 
   @override
