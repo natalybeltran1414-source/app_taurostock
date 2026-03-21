@@ -1,5 +1,6 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../widgets/custom_widgets.dart' as custom; // ← MEJORADO: con alias
+import '../services/database_service.dart';
 
 class ResetPasswordScreen extends StatefulWidget {
   final String email;
@@ -240,50 +241,93 @@ class _ResetPasswordScreenState extends State<ResetPasswordScreen> {
 
                 setState(() => _isLoading = true);
 
-                // Simular cambio de contraseña
-                await Future.delayed(const Duration(seconds: 2));
+                try {
+                  final db = DatabaseService();
+                  final user = await db.getUserByEmail(widget.email);
 
-                setState(() => _isLoading = false);
+                  if (user == null) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('El usuario ya no existe'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                    setState(() => _isLoading = false);
+                    return;
+                  }
 
-                if (mounted) {
-                  showDialog(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: const Icon(Icons.check_circle, color: Colors.green, size: 50),
-                      content: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Text(
-                            '¡Contraseña actualizada!',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
+                  final updatedUser = user.copyWith(
+                    password: _newPasswordController.text.trim(),
+                  );
+
+                  final success = await db.updateUser(updatedUser);
+
+                  setState(() => _isLoading = false);
+
+                  if (!success) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('No se pudo actualizar la contraseña'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                    return;
+                  }
+
+                  if (mounted) {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Icon(Icons.check_circle, color: Colors.green, size: 50),
+                        content: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Text(
+                              '¡Contraseña actualizada!',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            'Tu contraseña se ha restablecido correctamente. '
-                            'Ahora puedes iniciar sesión con tu nueva contraseña.',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: custom.textSecondary,
+                            const SizedBox(height: 8),
+                            Text(
+                              'Tu contraseña se ha restablecido correctamente. '
+                              'Ahora puedes iniciar sesión con tu nueva contraseña.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: custom.textSecondary,
+                              ),
                             ),
+                          ],
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () {
+                              Navigator.of(context).popUntil((route) => route.isFirst);
+                            },
+                            style: TextButton.styleFrom(
+                              foregroundColor: custom.primaryLilac,
+                            ),
+                            child: const Text('Iniciar sesión'),
                           ),
                         ],
                       ),
-                      actions: [
-                        TextButton(
-                          onPressed: () {
-                            Navigator.of(context).popUntil((route) => route.isFirst);
-                          },
-                          style: TextButton.styleFrom(
-                            foregroundColor: custom.primaryLilac,
-                          ),
-                          child: const Text('Iniciar sesión'),
-                        ),
-                      ],
-                    ),
-                  );
+                    );
+                  }
+                } catch (e) {
+                  setState(() => _isLoading = false);
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Error al actualizar la contraseña: $e'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
                 }
               },
             ),

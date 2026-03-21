@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../widgets/custom_widgets.dart' as custom; // ← MEJORADO: con alias
+import '../services/database_service.dart';
+import 'reset_password_screen.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({Key? key}) : super(key: key);
@@ -12,6 +14,7 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   late TextEditingController _emailController;
   bool _isLoading = false;
   bool _emailSent = false;
+  String? _resetToken;
 
   @override
   void initState() {
@@ -149,6 +152,21 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   ],
                 ),
               ),
+              const SizedBox(height: 16),
+              if (_resetToken != null)
+                custom.CustomButton(
+                  label: 'Restablecer contraseña ahora',
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => ResetPasswordScreen(
+                          email: _emailController.text.trim(),
+                          token: _resetToken!,
+                        ),
+                      ),
+                    );
+                  },
+                ),
               const SizedBox(height: 24),
               custom.CustomButton(
                 label: 'Volver al inicio de sesión',
@@ -171,7 +189,9 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                 label: 'Enviar instrucciones',
                 isLoading: _isLoading,
                 onPressed: () async {
-                  if (_emailController.text.isEmpty) {
+                  final email = _emailController.text.trim();
+
+                  if (email.isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text('Por favor ingresa tu correo electrónico'),
@@ -183,13 +203,48 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
 
                   setState(() => _isLoading = true);
 
-                  // Simular envío de correo
-                  await Future.delayed(const Duration(seconds: 2));
+                  try {
+                    final user = await DatabaseService().getUserByEmail(email);
 
-                  setState(() {
-                    _isLoading = false;
-                    _emailSent = true;
-                  });
+                    if (user == null) {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('El correo no está registrado'),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                      return;
+                    }
+
+                    setState(() {
+                      _resetToken = DateTime.now().millisecondsSinceEpoch.toString();
+                      _emailSent = true;
+                    });
+
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Hemos generado un enlace de restablecimiento para $email'),
+                          backgroundColor: Colors.green[700],
+                        ),
+                      );
+                    }
+                  } catch (e) {
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text('Error al procesar la solicitud: '),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  } finally {
+                    if (mounted) {
+                      setState(() => _isLoading = false);
+                    }
+                  }
                 },
               ),
               const SizedBox(height: 16),
